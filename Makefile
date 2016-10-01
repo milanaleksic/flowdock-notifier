@@ -5,7 +5,7 @@ include gomakefiles/common.mk
 include gomakefiles/metalinter.mk
 include gomakefiles/upx.mk
 
-SOURCES := $(shell find $(SOURCEDIR) -name '*.go' \
+SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
 
 $(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES)

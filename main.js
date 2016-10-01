@@ -1,13 +1,14 @@
-var child_process = require('child_process');
+'use strict';
 
-exports.handler = function(event, context) {
-  var proc = child_process.spawn('./flowdock-notifier', [ JSON.stringify(event) ], { stdio: 'inherit' });
+const exec = require('child_process').exec;
 
-  proc.on('close', function(code) {
-    if(code !== 0) {
-      return context.done(new Error("Process exited with non-zero status code"));
-    }
+exports.handler = (event, context, callback) => {
+    console.log("Hello from JS");
+    console.log("Event: " + event + ", stringified: " + JSON.stringify(event));
+    const child = exec("./flowdock-notifier '" + JSON.stringify(event) + "'", (error) => {
+        callback(error, 'Process complete!');
+    });
 
-    context.done(null);
-  });
-}
+    child.stdout.on('data', console.log);
+    child.stderr.on('data', console.error);
+};

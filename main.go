@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	event := os.Args[1]
-	fmt.Printf("Success, event received for this Lambda: %s", event)
+	fmt.Println("Hello World from Go!")
+	fmt.Printf("Success, arguments received: %+v", os.Args)
 }
