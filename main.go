@@ -4,34 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/milanaleksic/flowdock-notifier/db"
 )
 
+// Version carries the program version (should be setup in compilation time to a proper value)
+var Version = "undefined"
+
 func main() {
-	fmt.Println("Hello World from Go!")
-	fmt.Printf("Success, arguments received: %+v", os.Args)
-
-	sess, err := session.NewSession()
-	if err != nil {
-		fmt.Println("failed to create session,", err)
+	fmt.Printf("Flowdock Notifier version %v, arguments received: %+v\n", Version, os.Args[1:])
+	database := db.New()
+	if !database.IsActive() {
+		fmt.Println("Application is not active!")
 		return
 	}
-
-	svc := dynamodb.New(sess)
-
-	params := &dynamodb.DescribeTableInput{
-		TableName: aws.String("flowdock-notifier"),
-	}
-	resp, err := svc.DescribeTable(params)
-
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return
-	}
-
-	fmt.Printf("Table description: %+v", resp)
+	fmt.Println("Seems that we are good to go!")
 }
