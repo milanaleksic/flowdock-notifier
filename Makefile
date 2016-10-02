@@ -3,7 +3,6 @@ APP_NAME = $(lastword $(subst /, ,$(PACKAGE)))
 
 include gomakefiles/common.mk
 include gomakefiles/metalinter.mk
-include gomakefiles/upx.mk
 
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
@@ -15,12 +14,11 @@ ${RELEASE_SOURCES}: $(SOURCES)
 
 include gomakefiles/semaphore.mk
 
-.PHONY: package
-package: $(APP_NAME) 
-	zip archive.zip flowdock-notifier main.js
+archive.zip: $(APP_NAME) 
+	zip archive.zip app main.js
 
 .PHONY: deployaws
-deployaws: package
+deployaws: archive.zip
 ifndef AWS_ACCESS_KEY_ID
 	$(error AWS_ACCESS_KEY_ID parameter must be set)
 endif
@@ -63,7 +61,7 @@ endif
 		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
 
 .PHONY: prepare
-prepare: prepare_metalinter prepare_upx prepare_github_release
+prepare: prepare_metalinter prepare_github_release
 
 .PHONY: clean
 clean: clean_common clean_bindata
