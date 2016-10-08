@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/milanaleksic/flowdock-notifier/db"
 )
@@ -17,5 +19,15 @@ func main() {
 		fmt.Println("Application is not active!")
 		return
 	}
-	fmt.Println("Seems that we are good to go!")
+	database.SetLastCommunicationWith("Test", time.Now())
+	if moment, err := database.GetLastCommunicationWith("Test"); err != nil {
+		log.Fatal("Could not get last comm time for Test")
+	} else {
+		log.Println("Last moment for Test is: ", moment)
+	}
+	if moment, err := database.GetLastCommunicationWith("Test2"); err != nil {
+		log.Fatal("Could not get last comm time for Test2")
+	} else {
+		log.Println("Last moment for Test2 is: ", moment)
+	}
 }

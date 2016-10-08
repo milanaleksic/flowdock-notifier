@@ -17,8 +17,8 @@ include gomakefiles/semaphore.mk
 archive.zip: $(APP_NAME) 
 	zip archive.zip app main.js
 
-.PHONY: deployaws
-deployaws: archive.zip
+.PHONY: _check_params
+_check_params: 
 ifndef AWS_ACCESS_KEY_ID
 	$(error AWS_ACCESS_KEY_ID parameter must be set)
 endif
@@ -28,6 +28,9 @@ endif
 ifndef AWS_REGION
 	$(error AWS_REGION parameter must be set)
 endif
+
+.PHONY: deployaws
+deployaws: archive.zip _check_params
 	docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
@@ -39,16 +42,7 @@ endif
 		  --zip-file fileb:///data/archive.zip 
 
 .PHONY: invoke
-invoke:
-ifndef AWS_ACCESS_KEY_ID
-	$(error AWS_ACCESS_KEY_ID parameter must be set)
-endif
-ifndef AWS_SECRET_ACCESS_KEY
-	$(error AWS_SECRET_ACCESS_KEY parameter must be set)
-endif
-ifndef AWS_REGION
-	$(error AWS_REGION parameter must be set)
-endif
+invoke: _check_params
 	docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
