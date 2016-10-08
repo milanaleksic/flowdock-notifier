@@ -2,4 +2,7 @@ flowdock-notifier
 archive.zip
 app
 debug
-/.vscode
+/.vscodeconfig.toml
+local.bash
+.vscode
+config.toml

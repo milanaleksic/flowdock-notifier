@@ -16,6 +16,9 @@ var Version = "undefined"
 
 func main() {
 	fmt.Printf("Flowdock Notifier version %v, arguments received: %+v\n", Version, os.Args[1:])
+
+	conf := readConfig()
+
 	database := db.New()
 	if !database.IsActive() {
 		fmt.Println("Application is not active!")
@@ -33,15 +36,15 @@ func main() {
 		log.Println("Last moment for Test2 is: ", moment)
 	}
 
-	for name, lastMentioned := range userAndLastMention(os.Getenv("FLOWDOCK_MY_NAME")) {
+	for name, lastMentioned := range userAndLastMention(conf) {
 		log.Printf("A Mention by: %s %1.f hours ago ", name, time.Since(lastMentioned).Hours())
 	}
 }
 
-func userAndLastMention(myName string) (result map[string]time.Time) {
-	nameRegex := regexp.MustCompile(fmt.Sprintf("(?i)@%s", myName))
+func userAndLastMention(conf config) (result map[string]time.Time) {
+	nameRegex := regexp.MustCompile(fmt.Sprintf("(?i)@%s", conf.MyUsername))
 	result = make(map[string]time.Time)
-	client := flowdock.NewClient(os.Getenv("FLOWDOCK_API_TOKEN"))
+	client := flowdock.NewClient(conf.FlowdockToken)
 	if mentions, err := client.GetMyMentions(50); err != nil {
 		log.Fatalf("Could not fetch flowdock mentions because of: %+v", err)
 	} else {
