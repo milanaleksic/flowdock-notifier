@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"time"
 
+	"github.com/milanaleksic/flowdock"
 	"github.com/milanaleksic/flowdock-notifier/db"
 )
 
@@ -30,4 +32,33 @@ func main() {
 	} else {
 		log.Println("Last moment for Test2 is: ", moment)
 	}
+
+	for name, lastMentioned := range userAndLastMention(os.Getenv("FLOWDOCK_MY_NAME")) {
+		log.Printf("A Mention by: %s %1.f hours ago ", name, time.Since(lastMentioned).Hours())
+	}
+}
+
+func userAndLastMention(myName string) (result map[string]time.Time) {
+	nameRegex := regexp.MustCompile(fmt.Sprintf("(?i)@%s", myName))
+	result = make(map[string]time.Time)
+	client := flowdock.NewClient(os.Getenv("FLOWDOCK_API_TOKEN"))
+	if mentions, err := client.GetMyMentions(50); err != nil {
+		log.Fatalf("Could not fetch flowdock mentions because of: %+v", err)
+	} else {
+		for _, mention := range mentions {
+			if mention.Message.UserID == "0" {
+				// HAL or some other app
+				continue
+			}
+			if len(nameRegex.FindStringIndex(mention.Message.Content)) == 0 {
+				// ignoring if no explicit mention
+				continue
+			}
+			user := client.DetailsForUser(mention.Message.UserID)
+			if _, ok := result[user.Nick]; !ok {
+				result[user.Nick] = time.Unix(mention.Message.Timestamp/1000, 0)
+			}
+		}
+	}
+	return
 }

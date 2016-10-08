@@ -4,3 +4,9 @@
 [submodule "vendor/github.com/aws/aws-sdk-go"]
 	path = vendor/github.com/aws/aws-sdk-go
 	url = https://github.com/aws/aws-sdk-go
+[submodule "vendor/github.com/milanaleksic/flowdock"]
+	path = vendor/github.com/milanaleksic/flowdock
+	url = https://github.com/milanaleksic/flowdock
+[submodule "vendor/github.com/njern/httpstream"]
+	path = vendor/github.com/njern/httpstream
+	url = https://github.com/njern/httpstream
