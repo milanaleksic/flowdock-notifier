@@ -91,7 +91,7 @@ func (i *Igor) Answer(name string, lastComm MentionContext) {
 	if msg, err := i.database.GetResponseMessage(); err != nil {
 		log.Fatalf("Could not answer to %s because of %+v", name, err)
 	} else {
-		log.Printf(`Answering to %s "%s"`, name, msg)
+		log.Printf(`Answering to %s`, name)
 		i.client.RespondToFlow(lastComm.Flow, lastComm.ThreadID, msg)
 	}
 }
