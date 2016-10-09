@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/milanaleksic/igor"
@@ -23,6 +24,11 @@ func main() {
 	}
 
 	for name, lastMentioned := range igor.GetUserAndLastMention() {
-		igor.Answer(name, lastMentioned)
+		//FIXME: remove protection
+		if name == "Milan" {
+			igor.Answer(name, lastMentioned)
+		} else {
+			log.Printf("Not answering to %s", name)
+		}
 	}
 }

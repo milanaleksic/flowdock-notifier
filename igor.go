@@ -92,6 +92,6 @@ func (i *Igor) Answer(name string, lastComm MentionContext) {
 		log.Fatalf("Could not answer to %s because of %+v", name, err)
 	} else {
 		log.Printf(`Answering to %s "%s"`, name, msg)
-		//TODO: send the answer!
+		i.client.RespondToFlow(lastComm.Flow, lastComm.ThreadID, msg)
 	}
 }
