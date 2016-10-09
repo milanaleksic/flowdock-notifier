@@ -1,5 +1,6 @@
 PACKAGE := $(shell go list -e)
 APP_NAME = $(lastword $(subst /, ,$(PACKAGE)))
+MAIN_APP_DIR = cmd/main
 
 include gomakefiles/common.mk
 include gomakefiles/metalinter.mk
@@ -14,21 +15,21 @@ ${RELEASE_SOURCES}: $(SOURCES)
 
 include gomakefiles/semaphore.mk
 
-config.toml: config.toml.template
+config.toml: $(MAIN_APP_DIR)/config.toml.template
 ifndef FLOWDOCK_API_TOKEN
 	$(error FLOWDOCK_API_TOKEN parameter must be set)
 endif
 ifndef FLOWDOCK_NICK
 	$(error FLOWDOCK_NICK parameter must be set)
 endif
-	cat config.toml.template | sed \
+	cat $(MAIN_APP_DIR)/config.toml.template | sed \
 		-e "s/FLOWDOCK_API_TOKEN/$$FLOWDOCK_API_TOKEN/" \
 		-e "s/FLOWDOCK_NICK/$$FLOWDOCK_NICK/" \
-		> config.toml
+		> $(MAIN_APP_DIR)/config.toml
 
-archive.zip: $(APP_NAME) config.toml
-	zip archive.zip $(APP_NAME) main.js config.toml
-	printf "@ $(APP_NAME)\n@=app\n" | zipnote -w archive.zip
+$(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME) $(MAIN_APP_DIR)/config.toml
+	cd $(MAIN_APP_DIR) && zip archive.zip $(APP_NAME) main.js config.toml
+	printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
 
 .PHONY: _check_aws_params
 _check_aws_params: 
@@ -43,7 +44,7 @@ ifndef AWS_REGION
 endif
 
 .PHONY: deployaws
-deployaws: archive.zip _check_aws_params
+deployaws: $(MAIN_APP_DIR)/archive.zip _check_aws_params
 	docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
@@ -51,7 +52,7 @@ deployaws: archive.zip _check_aws_params
 	    garland/aws-cli-docker \
 	    aws lambda update-function-code \
 		  --region $$AWS_REGION \
-		  --function-name "flowdock-notifier" \
+		  --function-name $(APP_NAME) \
 		  --zip-file fileb:///data/archive.zip 
 
 .PHONY: invoke
@@ -64,7 +65,7 @@ invoke: _check_aws_params
 	    aws lambda invoke \
 		  --region $$AWS_REGION \
 		  --log-type Tail \
-		  --function-name "flowdock-notifier" \
+		  --function-name $(APP_NAME) \
 		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
 
 .PHONY: prepare

@@ -64,3 +64,12 @@
 [submodule "vendor/gopkg.in/yaml.v2"]
 	path = vendor/gopkg.in/yaml.v2
 	url = https://gopkg.in/yaml.v2
+[submodule "cmd/main/vendor/github.com/BurntSushi/toml"]
+	path = cmd/main/vendor/github.com/BurntSushi/toml
+	url = https://github.com/BurntSushi/toml
+[submodule "cmd/main/vendor/github.com/milanaleksic/igor"]
+	path = cmd/main/vendor/github.com/milanaleksic/igor
+	url = https://github.com/milanaleksic/igor
+[submodule "cmd/main/vendor/github.com/aws/aws-sdk-go"]
+	path = cmd/main/vendor/github.com/aws/aws-sdk-go
+	url = https://github.com/aws/aws-sdk-go
