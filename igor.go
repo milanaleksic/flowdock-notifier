@@ -81,7 +81,6 @@ func (i *Igor) addMessageToResult(message flowdock.MessageEvent, result map[stri
 		log.Fatalf("Could not get last comm time for %s, err=%+v", user.Nick, err)
 	}
 	if lastComm != nil && lastComm.After(mentionMoment) {
-		log.Printf("Ignoring since %v is after %v", lastComm, mentionMoment)
 		return
 	}
 	if _, ok := result[user.Nick]; !ok {
