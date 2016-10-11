@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	dateOnlyFormat = "02/01/2006"
 	messageSuffix  = " Powered by [Igor](https://github.com/milanaleksic/igor)"
 )
 
@@ -70,12 +69,12 @@ func (db *DB) getActivity() {
 			activeFrom = *resp.Items[1]["value"].S
 			activeUntil = *resp.Items[0]["value"].S
 		}
-		parsedActiveFrom, err := time.Parse(time.RFC3339, activeFrom)
+		parsedActiveFrom, err := time.Parse(time.RFC822, activeFrom)
 		if err != nil {
 			log.Fatalf("Active from couldn't be parsed, err: %+v", err)
 			return
 		}
-		parsedActiveUntil, err := time.Parse(time.RFC3339, activeUntil)
+		parsedActiveUntil, err := time.Parse(time.RFC822, activeUntil)
 		if err != nil {
 			log.Fatalf("Active until couldn't be parsed, err: %+v", err)
 			return
@@ -154,7 +153,7 @@ func (db *DB) GetResponseMessage() (string, error) {
 		return "", err
 	}
 	if resp.Item == nil {
-		log.Fatalf("Seems that response message template is not available in the DB")
+		log.Fatal("Seems that response message template is not available in the DB")
 	}
 	templ := *resp.Item["value"].S
 	buff := new(bytes.Buffer)
@@ -162,8 +161,8 @@ func (db *DB) GetResponseMessage() (string, error) {
 		From  string
 		Until string
 	}{
-		db.activeFrom.Format(dateOnlyFormat),
-		db.activeUntil.Format(dateOnlyFormat),
+		db.activeFrom.Format(time.RFC822),
+		db.activeUntil.Format(time.RFC822),
 	}
 	tmpl, err := template.New("template").Parse(templ + messageSuffix)
 	if err != nil {

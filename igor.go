@@ -17,6 +17,7 @@ type MentionContext struct {
 	Flow     string
 	ThreadID string
 	User     string
+	UserID   int64
 }
 
 // Igor is the main entrypoint to work with the library
@@ -66,7 +67,7 @@ func (i *Igor) addMessageToResult(message flowdock.MessageEvent, result map[stri
 		// HAL or some other app
 		return
 	}
-	if len(i.nameRegex.FindStringIndex(message.Content)) == 0 {
+	if message.Flow != "" && len(i.nameRegex.FindStringIndex(message.Content)) == 0 {
 		// ignoring if no explicit mention
 		return
 	}
@@ -90,8 +91,10 @@ func (i *Igor) addMessageToResult(message flowdock.MessageEvent, result map[stri
 			Flow:     message.Flow,
 			ThreadID: message.ThreadID,
 			User:     user.Nick,
+			UserID:   user.ID,
 		}
 	}
+
 }
 
 // Answer will send a message in the adequate Flow/Thread
@@ -100,18 +103,13 @@ func (i *Igor) Answer(name string, lastComm MentionContext) {
 	if err != nil {
 		log.Fatalf("Could not write to DB, err=%+v", err)
 	}
-	//FIXME: remove protection
-	if name != "Milan" {
-		log.Printf("Not answering to %s", name)
-		return
-	}
-	if _, err := i.database.GetResponseMessage(); err != nil {
+	if msg, err := i.database.GetResponseMessage(); err != nil {
 		log.Fatalf("Could not answer to %s because of %+v", name, err)
 	} else if lastComm.Flow != "" {
 		log.Printf(`Answering to %s`, name)
-		i.client.RespondToFlow(lastComm.Flow, lastComm.ThreadID, "Test")
+		i.client.RespondToFlow(lastComm.Flow, lastComm.ThreadID, msg)
 	} else {
 		log.Printf(`Answering to %s via private message`, name)
-		//FIXME: still does not know how to send a private message
+		i.client.RespondToPerson(lastComm.UserID, msg)
 	}
 }
