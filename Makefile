@@ -8,43 +8,71 @@ include gomakefiles/metalinter.mk
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
 
-$(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES) config.toml
+$(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES) $(MAIN_APP_DIR)/config.toml
 	cd $(MAIN_APP_DIR)/ && go build -ldflags '-X main.Version=${VERSION}' -o ${APP_NAME}
 
 ${RELEASE_SOURCES}: $(SOURCES)
 
 include gomakefiles/semaphore.mk
 
-config.toml: $(MAIN_APP_DIR)/config.toml.template
+$(MAIN_APP_DIR)/config.toml: $(MAIN_APP_DIR)/config.toml.template
 ifndef FLOWDOCK_API_TOKEN
 	$(error FLOWDOCK_API_TOKEN parameter must be set)
 endif
 ifndef FLOWDOCK_NICK
 	$(error FLOWDOCK_NICK parameter must be set)
 endif
+	. personal.env
 	cat $(MAIN_APP_DIR)/config.toml.template | sed \
 		-e "s/FLOWDOCK_API_TOKEN/$$FLOWDOCK_API_TOKEN/" \
 		-e "s/FLOWDOCK_NICK/$$FLOWDOCK_NICK/" \
 		> $(MAIN_APP_DIR)/config.toml
 
 $(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME) $(MAIN_APP_DIR)/config.toml
-	cd $(MAIN_APP_DIR) && zip archive.zip $(APP_NAME) main.js config.toml
+	cd $(MAIN_APP_DIR) && (rm archive.zip > /dev/null 2>&1 || true) \
+		&& zip archive.zip $(APP_NAME) main.js config.toml
 	printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
 
-.PHONY: _check_aws_params
-_check_aws_params: 
-ifndef AWS_ACCESS_KEY_ID
-	$(error AWS_ACCESS_KEY_ID parameter must be set)
-endif
-ifndef AWS_SECRET_ACCESS_KEY
-	$(error AWS_SECRET_ACCESS_KEY parameter must be set)
-endif
-ifndef AWS_REGION
-	$(error AWS_REGION parameter must be set)
-endif
+.PHONY: unform
+unform: $(MAIN_APP_DIR)/archive.zip
+	. personal.env
+	docker run -i --rm \
+		-v $(abspath $(MAIN_APP_DIR)):/data \
+	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
+	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
+	    garland/aws-cli-docker \
+	    aws cloudformation delete-stack  \
+		  --region $$AWS_REGION \
+		  --stack-name igor
 
-.PHONY: deployaws
-deployaws: $(MAIN_APP_DIR)/archive.zip _check_aws_params
+.PHONY: form
+form: $(MAIN_APP_DIR)/archive.zip
+	. personal.env
+	docker run -i --rm \
+		-v $(abspath $(MAIN_APP_DIR)):/data \
+	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
+	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
+	    garland/aws-cli-docker \
+	    aws s3 cp  \
+		  --region $$AWS_REGION \
+		  /data/archive.zip \
+		  s3://milanaleksic-deployment/$(APP_NAME).zip
+	docker run -i --rm \
+		-v $(abspath $(MAIN_APP_DIR)):/data \
+	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
+	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
+	    garland/aws-cli-docker \
+	    aws cloudformation create-stack  \
+		  --region $$AWS_REGION \
+		  --stack-name igor \
+		  --template-body file:///data/cf/stack.template \
+		  --capabilities CAPABILITY_IAM \
+		  --parameters \
+		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT 
+
+.PHONY: update
+update: $(MAIN_APP_DIR)/archive.zip
+	. personal.env
 	docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
@@ -56,7 +84,8 @@ deployaws: $(MAIN_APP_DIR)/archive.zip _check_aws_params
 		  --zip-file fileb:///data/archive.zip 
 
 .PHONY: invoke
-invoke: _check_aws_params
+invoke:
+	. personal.env
 	docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \

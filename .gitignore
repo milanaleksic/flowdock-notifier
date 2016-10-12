@@ -3,6 +3,6 @@ archive.zip
 app
 debug
 /.vscodeconfig.toml
-local.bash
+personal.env
 .vscode
 config.toml

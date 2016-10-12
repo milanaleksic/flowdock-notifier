@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	messageSuffix  = " Powered by [Igor](https://github.com/milanaleksic/igor)"
+	messageSuffix = " Powered by [Igor](https://github.com/milanaleksic/igor)"
 )
 
 // New creates new DB abstraction
@@ -37,7 +37,7 @@ type DB struct {
 
 func (db *DB) getActivity() {
 	resp, err := db.dynamo.Scan(&dynamodb.ScanInput{
-		TableName:        aws.String("flowdock-notifier"),
+		TableName:        aws.String("igor-config"),
 		FilterExpression: aws.String("#id IN (:activeFrom, :activeUntil)"),
 		ExpressionAttributeNames: map[string]*string{
 			"#value": aws.String("value"),
@@ -92,7 +92,7 @@ func (db *DB) IsActive() bool {
 // GetLastCommunicationWith returns when was the last time we talked to a user X
 func (db *DB) GetLastCommunicationWith(username string) (*time.Time, error) {
 	resp, err := db.dynamo.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("flowdock-notifier-communication"),
+		TableName: aws.String("igor-communication"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"userid": {
 				S: aws.String(username),
@@ -115,7 +115,7 @@ func (db *DB) GetLastCommunicationWith(username string) (*time.Time, error) {
 // SetLastCommunicationWith sets the last time we communicated with some Flowdock user
 func (db *DB) SetLastCommunicationWith(username string, moment time.Time) error {
 	_, err := db.dynamo.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String("flowdock-notifier-communication"),
+		TableName: aws.String("igor-communication"),
 		Item: map[string]*dynamodb.AttributeValue{
 			"userid": {
 				S: aws.String(username),
@@ -139,7 +139,7 @@ func (db *DB) GetActivationTimeStart() time.Time {
 // GetResponseMessage will return the active reponse message
 func (db *DB) GetResponseMessage() (string, error) {
 	resp, err := db.dynamo.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("flowdock-notifier"),
+		TableName: aws.String("igor-config"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
 				S: aws.String("message"),
