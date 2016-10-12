@@ -1,5 +1,7 @@
 # Igor
 
+[![Build Status](https://semaphoreci.com/api/v1/milanaleksic/igor/branches/master/badge.svg)](https://semaphoreci.com/milanaleksic/igor)
+
 This is a Flowdock bot. It uses AWS DynamoDB and AWS Lambda to check 
 if there are new mentions and it responds to them if the date is between some
 values stored in DynamoDB configuration.
