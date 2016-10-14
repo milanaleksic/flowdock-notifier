@@ -22,85 +22,95 @@ endif
 ifndef FLOWDOCK_NICK
 	$(error FLOWDOCK_NICK parameter must be set)
 endif
-	. personal.env
-	cat $(MAIN_APP_DIR)/config.toml.template | sed \
+	@. personal.env
+	@cat $(MAIN_APP_DIR)/config.toml.template | sed \
 		-e "s/FLOWDOCK_API_TOKEN/$$FLOWDOCK_API_TOKEN/" \
 		-e "s/FLOWDOCK_NICK/$$FLOWDOCK_NICK/" \
 		> $(MAIN_APP_DIR)/config.toml
 
 $(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME) $(MAIN_APP_DIR)/config.toml
-	cd $(MAIN_APP_DIR) && (rm archive.zip > /dev/null 2>&1 || true) \
+	@cd $(MAIN_APP_DIR) && (rm archive.zip > /dev/null 2>&1 || true) \
 		&& zip archive.zip $(APP_NAME) main.js config.toml
-	printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
+	@printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
 
-.PHONY: unform
-unform: $(MAIN_APP_DIR)/archive.zip
-	. personal.env
-	docker run -i --rm \
+aws = . personal.env && docker run -i --rm \
 		-v $(abspath $(MAIN_APP_DIR)):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
 	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
 	    garland/aws-cli-docker \
-	    aws cloudformation delete-stack  \
-		  --region $$AWS_REGION \
+	    aws --region $$AWS_REGION
+
+.PHONY: unform
+unform: $(MAIN_APP_DIR)/archive.zip
+	@$(aws) cloudformation delete-stack  \
 		  --stack-name igor
 
 .PHONY: form
 form: $(MAIN_APP_DIR)/archive.zip
-	. personal.env
-	docker run -i --rm \
-		-v $(abspath $(MAIN_APP_DIR)):/data \
-	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
-	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
-	    garland/aws-cli-docker \
-	    aws s3 cp  \
-		  --region $$AWS_REGION \
+	@$(aws) s3 cp  \
 		  /data/archive.zip \
-		  s3://milanaleksic-deployment/$(APP_NAME).zip
-	docker run -i --rm \
-		-v $(abspath $(MAIN_APP_DIR)):/data \
-	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
-	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
-	    garland/aws-cli-docker \
-	    aws cloudformation create-stack  \
-		  --region $$AWS_REGION \
+		  s3://$$BUCKET_DEPLOYMENT/$(APP_NAME).zip
+	@$(aws) cloudformation create-stack  \
 		  --stack-name igor \
 		  --template-body file:///data/cf/stack.template \
 		  --capabilities CAPABILITY_IAM \
 		  --parameters \
-		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT 
+		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT
+	$(MAKE) --silent wait-for-status EXPECTED=CREATE_COMPLETE FAILURE=CREATE_ROLLBACK_COMPLETE
+
+.PHONY: reform
+reform: $(MAIN_APP_DIR)/archive.zip
+	@$(aws) cloudformation update-stack  \
+		  --stack-name igor \
+		  --template-body file:///data/cf/stack.template \
+		  --capabilities CAPABILITY_IAM \
+		  --parameters \
+		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT
+	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
 .PHONY: update
 update: $(MAIN_APP_DIR)/archive.zip
-	. personal.env
-	docker run -i --rm \
-		-v $(abspath $(MAIN_APP_DIR)):/data \
-	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
-	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
-	    garland/aws-cli-docker \
-	    aws lambda update-function-code \
-		  --region $$AWS_REGION \
+	@$(aws) lambda update-function-code \
 		  --function-name $(APP_NAME) \
 		  --zip-file fileb:///data/archive.zip 
 
 .PHONY: invoke
 invoke:
-	. personal.env
-	docker run -i --rm \
-		-v $(abspath $(MAIN_APP_DIR)):/data \
-	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
-	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
-	    garland/aws-cli-docker \
-	    aws lambda invoke \
-		  --region $$AWS_REGION \
+	@$(aws) lambda invoke \
 		  --log-type Tail \
 		  --function-name $(APP_NAME) \
 		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
+
+.PHONY: wait-for-status
+wait-for-status:
+ifndef EXPECTED
+	$(error EXPECTED parameter must be set)
+endif
+ifndef FAILURE
+	$(error FAILURE parameter must be set)
+endif
+	@while [ 1 ] ;\
+	do \
+		status=`$(MAKE) --silent get-status`; \
+		if [[ "$$EXPECTED" == "$$status" ]] ; then \
+			echo "success, status=$$status!"; \
+			exit 0; \
+		elif [[ "$$FAILURE" == "$$status" ]] ; then \
+			echo "failure, status=$$status!"; \
+			exit 1; \
+		fi; \
+		echo "Waiting, current status is: $$status"; \
+		sleep 2; \
+	done
+
+.PHONY: get-status
+get-status:
+	@$(aws) cloudformation describe-stacks \
+		  --stack-name igor \
+		  | jq '.Stacks[0].StackStatus' -r
 
 .PHONY: prepare
 prepare: prepare_metalinter prepare_github_release
 
 .PHONY: clean
-clean: clean_common clean_bindata
-	rm -rf $(MAIN_APP_DIR)/${APP_NAME}
-	rm -rf $(MAIN_APP_DIR)/${APP_NAME}.exe
+clean: clean_common
