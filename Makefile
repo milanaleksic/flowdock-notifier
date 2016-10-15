@@ -56,7 +56,8 @@ form: $(MAIN_APP_DIR)/archive.zip
 		  --capabilities CAPABILITY_IAM \
 		  --parameters \
 		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
-		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE
+		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE \
+		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID
 	$(MAKE) --silent wait-for-status EXPECTED=CREATE_COMPLETE FAILURE=CREATE_ROLLBACK_COMPLETE
 
 .PHONY: reform
@@ -67,7 +68,8 @@ reform: $(MAIN_APP_DIR)/archive.zip
 		  --capabilities CAPABILITY_IAM \
 		  --parameters \
 		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
-		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE
+		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE \
+		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
 .PHONY: update-lambda

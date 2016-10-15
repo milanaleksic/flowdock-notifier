@@ -7,6 +7,9 @@
         },
         "WebSiteBucket": {
             "Type": "String"
+        },
+        "CognitoPoolArn": {
+            "Type": "String"
         }
     },
     "Resources": {
@@ -181,6 +184,35 @@
                 }
             },
             "DeletionPolicy": "Retain"
+        },
+        "cognitoRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Federated": "cognito-identity.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRoleWithWebIdentity",
+                            "Condition": {
+                                "StringEquals": {
+                                    "cognito-identity.amazonaws.com:aud": {
+                                        "Ref": "CognitoPoolArn"
+                                    }
+                                },
+                                "ForAnyValue:StringLike": {
+                                    "cognito-identity.amazonaws.com:amr": "authenticated"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
         }
     },
     "Outputs": {
@@ -209,6 +241,14 @@
                 ]
             },
             "Description": "Name of S3 bucket to hold website content"
+        },
+        "cognitoRuleArn": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "cognitoRole",
+                    "Arn"
+                ]
+            }
         }
     }
 }

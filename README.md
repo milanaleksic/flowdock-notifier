@@ -15,7 +15,13 @@ to know _not_ to respond to avoid spamming.
 
 ### ... deploy
 
-Rename `personal.env.template` to `personal.env` and introduce adequate values.
+0. Make sure you have:
+    - Docker and JQ packages installed
+    - AWS account
+    - Flowdock account
+    - Client ID of a Google+ API approved Google Dev Console application
+1. rename `personal.env.template` to `personal.env` and introduce adequate values (ignore the ones with `GENERATED` prefix)
+2. run `cmd/main/cf/non_supported_pre.sh` to update the `personal.env` with the generated values
 
 Deploy to AWS with `make form`. Update function only with `make update`. Invoke directly via `make invoke`.
 
