@@ -4,6 +4,9 @@
     "Parameters": {
         "DeploymentBucket": {
             "Type": "String"
+        },
+        "WebSiteBucket": {
+            "Type": "String"
         }
     },
     "Resources": {
@@ -164,7 +167,48 @@
                     }
                 ]
             }
+        },
+        "siteBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "AccessControl": "PublicRead",
+                "BucketName": {
+                    "Ref": "WebSiteBucket"
+                },
+                "WebsiteConfiguration": {
+                    "IndexDocument": "index.html",
+                    "ErrorDocument": "error.html"
+                }
+            },
+            "DeletionPolicy": "Retain"
         }
     },
-    "Outputs": {}
+    "Outputs": {
+        "websiteURL": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "siteBucket",
+                    "WebsiteURL"
+                ]
+            },
+            "Description": "URL for website hosted on S3"
+        },
+        "websiteSecureURL": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "siteBucket",
+                                "DomainName"
+                            ]
+                        }
+                    ]
+                ]
+            },
+            "Description": "Name of S3 bucket to hold website content"
+        }
+    }
 }

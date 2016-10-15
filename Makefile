@@ -55,7 +55,8 @@ form: $(MAIN_APP_DIR)/archive.zip
 		  --template-body file:///data/cf/stack.template \
 		  --capabilities CAPABILITY_IAM \
 		  --parameters \
-		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT
+		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
+		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE
 	$(MAKE) --silent wait-for-status EXPECTED=CREATE_COMPLETE FAILURE=CREATE_ROLLBACK_COMPLETE
 
 .PHONY: reform
@@ -65,21 +66,28 @@ reform: $(MAIN_APP_DIR)/archive.zip
 		  --template-body file:///data/cf/stack.template \
 		  --capabilities CAPABILITY_IAM \
 		  --parameters \
-		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT
+		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
+		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
-.PHONY: update
-update: $(MAIN_APP_DIR)/archive.zip
+.PHONY: update-lambda
+update-lambda: $(MAIN_APP_DIR)/archive.zip
 	@$(aws) lambda update-function-code \
 		  --function-name $(APP_NAME) \
 		  --zip-file fileb:///data/archive.zip 
 
-.PHONY: invoke
-invoke:
+.PHONY: invoke-lambda
+invoke-lambda:
 	@$(aws) lambda invoke \
 		  --log-type Tail \
 		  --function-name $(APP_NAME) \
 		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
+
+.PHONY: deploy-site
+deploy-site:
+	@$(aws) s3 cp --recursive --acl public-read  \
+		  /data/site/ \
+		  s3://$$BUCKET_SITE/
 
 .PHONY: wait-for-status
 wait-for-status:
