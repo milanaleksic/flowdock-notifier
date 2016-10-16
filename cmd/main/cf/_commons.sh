@@ -13,6 +13,6 @@ function aws() {
     aws --region $AWS_REGION $*
 }
 
-function readIdentityPoolIdFromSettings() {
-    fgrep GENERATED_COGNITO_POOL_ID personal.env | awk 'BEGIN { FS = "=" } ; { print $2 }'
+function readFromSettings() {
+    fgrep $1 personal.env | awk 'BEGIN { FS = "=" } ; { print $2 }'
 }

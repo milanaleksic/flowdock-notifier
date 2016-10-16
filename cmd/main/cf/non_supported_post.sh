@@ -6,5 +6,5 @@ roleArn=`aws cloudformation describe-stacks --stack-name igor | \
     jq '.Stacks[0].Outputs[] | select(.OutputKey=="cognitoRuleArn") | .OutputValue' -r`
 
 aws cognito-identity set-identity-pool-roles \
-    --identity-pool-id `readIdentityPoolIdFromSettings` \
+    --identity-pool-id `readFromSettings GENERATED_COGNITO_POOL_ID` \
     --roles authenticated=$roleArn

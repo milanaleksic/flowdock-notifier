@@ -2,6 +2,8 @@
 
 . "$( dirname "${BASH_SOURCE[0]}" )"/_commons.sh
 
+rootDir=$SCRIPTS_DIR/../../..
+
 identityPoolId=`aws cognito-identity create-identity-pool \
       --identity-pool-name igorCognitoPool \
       --no-allow-unauthenticated-identities \
@@ -10,4 +12,4 @@ identityPoolId=`aws cognito-identity create-identity-pool \
   | jq '.IdentityPoolId' -r`
 
 sed -i "s/GENERATED_COGNITO_POOL_ID=.*\$/GENERATED_COGNITO_POOL_ID=$identityPoolId/g" \
-  $SCRIPTS_DIR/../../../personal.env
+  $rootDir/personal.env

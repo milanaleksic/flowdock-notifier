@@ -85,9 +85,21 @@ invoke-lambda:
 		  --function-name $(APP_NAME) \
 		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
 
+.PHONY: prepare-site
+prepare-site:
+	@. personal.env && cat $(MAIN_APP_DIR)/site/index.html \
+		| sed \
+			-e "s/GOOGLE_OAUTH2_CLIENT_ID/$$GOOGLE_OAUTH2_CLIENT_ID/g" \
+			-e "s/GENERATED_COGNITO_POOL_ID/$$GENERATED_COGNITO_POOL_ID/g" \
+			-e "s/AWS_REGION/$$AWS_REGION/g" \
+		> $(MAIN_APP_DIR)/site/index_expanded.html
+
 .PHONY: deploy-site
-deploy-site:
-	@$(aws) s3 cp --recursive --acl public-read  \
+deploy-site: prepare-site
+	@$(aws) s3 cp --acl public-read  \
+		  /data/site/index_expanded.html \
+		  s3://$$BUCKET_SITE/index.html
+	@$(aws) s3 sync --acl public-read --exclude '*.html' \
 		  /data/site/ \
 		  s3://$$BUCKET_SITE/
 
@@ -115,9 +127,8 @@ endif
 
 .PHONY: get-status
 get-status:
-	@$(aws) cloudformation describe-stacks \
-		  --stack-name igor \
-		  | jq '.Stacks[0].StackStatus' -r
+	@$(aws) cloudformation describe-stacks --stack-name igor \
+		| jq '.Stacks[0].StackStatus' -r
 
 .PHONY: prepare
 prepare: prepare_metalinter prepare_github_release

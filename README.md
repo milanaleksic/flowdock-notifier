@@ -15,15 +15,24 @@ to know _not_ to respond to avoid spamming.
 
 ### ... deploy
 
+Unfortunately we have to work with Cognito which is not supported by CloudFormation,
+so we have to split the work 
+
 0. Make sure you have:
     - Docker and JQ packages installed
     - AWS account
     - Flowdock account
     - Client ID of a Google+ API approved Google Dev Console application
 1. rename `personal.env.template` to `personal.env` and introduce adequate values (ignore the ones with `GENERATED` prefix)
-2. run `cmd/main/cf/non_supported_pre.sh` to update the `personal.env` with the generated values
+2. run `cmd/main/cf/non_supported_pre.sh` to update the `personal.env`
+3. deploy to AWS with `make form`
+4. run `cmd/main/cf/non_supported_post.sh` to update the `personal.env` with the values from CloudFormation (step 3)
 
-Deploy to AWS with `make form`. Update function only with `make update`. Invoke directly via `make invoke`.
+From this point on you can modify HTML and do `make deploy-site` to replace te cloud
+
+Other things you want to do are like:
+- update function only with `make update-lambda`
+- invoke directly via `make invoke-lambda`
 
 ### ... configure
 
