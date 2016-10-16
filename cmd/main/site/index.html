@@ -14,16 +14,18 @@
 		}
 	</style>
 </head>
-
 <body>
-	<div class='container'>
+	<div class='container' id="app">
 		<div class='row'>
 			<div class='nine columns'>
 				<h3>Igor Control Panel</h3>
 			</div>
 			<div class='three columns'>
-				<span class='navbar-padding u-pull-right'>
+				<span class='navbar-padding u-pull-right u-full-width'>
             		<span class="g-signin2" data-onsuccess="googleSignIn"></span>
+				</span>
+				<span class='u-full-width'>
+					{{welcomeMessage}}					
 				</span>
 			</div>
 		</div>
@@ -38,6 +40,7 @@
 	</script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.6.9/aws-sdk.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.min.js"></script>
 	<script src="/app.js"></script>
 	<script src="https://apis.google.com/js/platform.js" async defer></script>
 </body>
