@@ -1,12 +1,14 @@
 var app = new Vue({
     el: '#app',
     data: $.extend(igor.config, {
-        email: "" 
+        email: "",
+        id: "",
+        name: ""
     }),
     computed: {
-        welcomeMessage: function() {
+        welcomeMessage: function () {
             if (this.email) {
-                return "Hi " + this.email
+                return "Hi " + this.name
             } else {
                 return "Checking..."
             }
@@ -20,31 +22,29 @@ var app = new Vue({
                 credentials: new AWS.CognitoIdentityCredentials({
                     IdentityPoolId: this.cognitoPoolId,
                     Logins: {
-                        'accounts.google.com': googleUser.getAuthResponse().id_token
                     }
                 })
             });
             this.updateCognitoServerToUseGoogleUser(googleUser);
         },
         // this is called by us when we detect credentials are not OK any more
-        refreshGoogleCredentials: function() {
+        refreshGoogleCredentials: function () {
             return gapi.auth2.getAuthInstance().signIn({
                 prompt: 'login'
-            }).then(function (userUpdate) {
-                var creds = AWS.config.credentials;
-                var newToken = userUpdate.getAuthResponse().id_token;
-                creds.params.Logins['accounts.google.com'] = newToken;
-                return app.updateCognitoServerToUseGoogleUser(userUpdate);
+            }).then(function (newUser) {
+                app.updateCognitoServerToUseGoogleUser(newUser);
             })
         },
-        updateCognitoServerToUseGoogleUser: function(googleUser) {
+        updateCognitoServerToUseGoogleUser: function (googleUser) {
             var appThis = this
+            AWS.config.credentials.params.Logins['accounts.google.com'] = googleUser.getAuthResponse().id_token;
             AWS.config.credentials.refresh(function (err) {
                 if (err) {
                     console.error("Error: ", err);
                 } else {
                     appThis.email = googleUser.getBasicProfile().getEmail();
-                    appThis.id = AWS.config.credentials.identityId;  
+                    appThis.name = googleUser.getBasicProfile().getName();
+                    appThis.id = AWS.config.credentials.identityId;
                 }
             })
         }

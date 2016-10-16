@@ -15,7 +15,7 @@
 	</style>
 </head>
 <body>
-	<div class='container' id="app">
+	<div class='container'>
 		<div class='row'>
 			<div class='nine columns'>
 				<h3>Igor Control Panel</h3>
@@ -24,7 +24,7 @@
 				<span class='navbar-padding u-pull-right u-full-width'>
             		<span class="g-signin2" data-onsuccess="googleSignIn"></span>
 				</span>
-				<span class='u-full-width'>
+				<span class='u-full-width' id="app">
 					{{welcomeMessage}}					
 				</span>
 			</div>
@@ -42,7 +42,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.min.js"></script>
 	<script src="/app.js"></script>
-	<script src="https://apis.google.com/js/platform.js" async defer></script>
+	<script src="https://apis.google.com/js/platform.js"></script>
 </body>
 
 </html>
