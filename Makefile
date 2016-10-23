@@ -8,29 +8,16 @@ include gomakefiles/metalinter.mk
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
 
-$(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES) $(MAIN_APP_DIR)/config.toml
+$(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES)
 	cd $(MAIN_APP_DIR)/ && go build -ldflags '-X main.Version=${VERSION}' -o ${APP_NAME}
 
 ${RELEASE_SOURCES}: $(SOURCES)
 
 include gomakefiles/semaphore.mk
 
-$(MAIN_APP_DIR)/config.toml: $(MAIN_APP_DIR)/config.toml.template
-	@. personal.env
-ifndef FLOWDOCK_API_TOKEN
-	$(error FLOWDOCK_API_TOKEN parameter must be set)
-endif
-ifndef FLOWDOCK_NICK
-	$(error FLOWDOCK_NICK parameter must be set)
-endif
-	@cat $(MAIN_APP_DIR)/config.toml.template | sed \
-		-e "s/FLOWDOCK_API_TOKEN/$$FLOWDOCK_API_TOKEN/" \
-		-e "s/FLOWDOCK_NICK/$$FLOWDOCK_NICK/" \
-		> $(MAIN_APP_DIR)/config.toml
-
-$(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME) $(MAIN_APP_DIR)/config.toml
+$(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME)
 	@cd $(MAIN_APP_DIR) && (rm archive.zip > /dev/null 2>&1 || true) \
-		&& zip archive.zip $(APP_NAME) main.js config.toml
+		&& zip archive.zip $(APP_NAME) main.js
 	@printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
 
 aws = . personal.env && docker run -i --rm \
@@ -61,7 +48,7 @@ form: $(MAIN_APP_DIR)/archive.zip
 	$(MAKE) --silent wait-for-status EXPECTED=CREATE_COMPLETE FAILURE=CREATE_ROLLBACK_COMPLETE
 
 .PHONY: reform
-reform: $(MAIN_APP_DIR)/archive.zip
+reform:
 	@$(aws) cloudformation update-stack  \
 		  --stack-name igor \
 		  --template-body file:///data/cf/stack.template \

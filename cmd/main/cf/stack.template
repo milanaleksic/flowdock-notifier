@@ -13,18 +13,18 @@
         }
     },
     "Resources": {
-        "igorConfigTable": {
+        "igorTable": {
             "Type": "AWS::DynamoDB::Table",
             "Properties": {
                 "AttributeDefinitions": [
                     {
-                        "AttributeName": "id",
+                        "AttributeName": "userId",
                         "AttributeType": "S"
                     }
                 ],
                 "KeySchema": [
                     {
-                        "AttributeName": "id",
+                        "AttributeName": "userId",
                         "KeyType": "HASH"
                     }
                 ],
@@ -32,29 +32,7 @@
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 },
-                "TableName": "igor-config"
-            }
-        },
-        "igorCommunicationTable": {
-            "Type": "AWS::DynamoDB::Table",
-            "Properties": {
-                "AttributeDefinitions": [
-                    {
-                        "AttributeName": "userid",
-                        "AttributeType": "S"
-                    }
-                ],
-                "KeySchema": [
-                    {
-                        "AttributeName": "userid",
-                        "KeyType": "HASH"
-                    }
-                ],
-                "ProvisionedThroughput": {
-                    "ReadCapacityUnits": 1,
-                    "WriteCapacityUnits": 1
-                },
-                "TableName": "igor-communication"
+                "TableName": "igor"
             }
         },
         "igorLambdaFunction": {
@@ -211,7 +189,7 @@
                         }
                     ]
                 },
-                                "Policies": [
+                "Policies": [
                     {
                         "PolicyName": "cognitoCanReadDynamoPolicy",
                         "PolicyDocument": {
@@ -220,9 +198,6 @@
                                 {
                                     "Effect": "Allow",
                                     "Action": [
-                                        "dynamodb:BatchGetItem",
-                                        "dynamodb:BatchWriteItem",
-                                        "dynamodb:DeleteItem",
                                         "dynamodb:GetItem",
                                         "dynamodb:PutItem",
                                         "dynamodb:Query",
@@ -239,7 +214,7 @@
                                                     },
                                                     ":*:table/",
                                                     {
-                                                        "Ref": "igorConfigTable"
+                                                        "Ref": "igorTable"
                                                     }
                                                 ]
                                             ]

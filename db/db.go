@@ -1,19 +1,13 @@
 package db
 
 import (
-	"bytes"
-	"fmt"
-	"html/template"
 	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-)
-
-const (
-	messageSuffix = " Powered by [Igor](https://github.com/milanaleksic/igor)"
+	"github.com/milanaleksic/igor"
 )
 
 // New creates new DB abstraction
@@ -22,155 +16,81 @@ func New() *DB {
 	if err != nil {
 		panic(err)
 	}
-	db := &DB{
+	return &DB{
 		dynamo: dynamodb.New(sess),
 	}
-	db.getActivity()
-	return db
 }
 
 // DB is an abstraction that keeps internals of working with the backend database
 type DB struct {
-	dynamo                  *dynamodb.DynamoDB
-	activeFrom, activeUntil time.Time
-}
-
-func (db *DB) getActivity() {
-	resp, err := db.dynamo.Scan(&dynamodb.ScanInput{
-		TableName:        aws.String("igor-config"),
-		FilterExpression: aws.String("#id IN (:activeFrom, :activeUntil)"),
-		ExpressionAttributeNames: map[string]*string{
-			"#value": aws.String("value"),
-			"#id":    aws.String("id"),
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":activeFrom": {
-				S: aws.String("activeFrom"),
-			},
-			":activeUntil": {
-				S: aws.String("activeUntil"),
-			},
-		},
-		ProjectionExpression: aws.String("id, #value"),
-	})
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	if len(resp.Items) != 2 {
-		return
-	}
-	if resp.Items[0] != nil && resp.Items[1] != nil {
-		var activeFrom, activeUntil string
-		if *resp.Items[0]["id"].S == "activeFrom" {
-			activeFrom = *resp.Items[0]["value"].S
-			activeUntil = *resp.Items[1]["value"].S
-		} else {
-			activeFrom = *resp.Items[1]["value"].S
-			activeUntil = *resp.Items[0]["value"].S
-		}
-		parsedActiveFrom, err := time.Parse(time.RFC822, activeFrom)
-		if err != nil {
-			log.Fatalf("Active from couldn't be parsed, err: %+v", err)
-			return
-		}
-		parsedActiveUntil, err := time.Parse(time.RFC822, activeUntil)
-		if err != nil {
-			log.Fatalf("Active until couldn't be parsed, err: %+v", err)
-			return
-		}
-		db.activeFrom = parsedActiveFrom
-		db.activeUntil = parsedActiveUntil
-	}
-}
-
-// IsActive returns true if the configuration table contains "active" configuration with value "true"
-func (db *DB) IsActive() bool {
-	return time.Now().Before(db.activeUntil) && time.Now().After(db.activeFrom)
-}
-
-// GetLastCommunicationWith returns when was the last time we talked to a user X
-func (db *DB) GetLastCommunicationWith(username string) (*time.Time, error) {
-	resp, err := db.dynamo.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("igor-communication"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"userid": {
-				S: aws.String(username),
-			},
-		},
-		AttributesToGet: []*string{
-			aws.String("moment"),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if resp.Item == nil {
-		return nil, nil
-	}
-	parsed, err := time.Parse(time.RFC3339, *resp.Item["moment"].S)
-	return &parsed, err
+	dynamo *dynamodb.DynamoDB
 }
 
 // SetLastCommunicationWith sets the last time we communicated with some Flowdock user
-func (db *DB) SetLastCommunicationWith(username string, moment time.Time) error {
-	_, err := db.dynamo.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String("igor-communication"),
-		Item: map[string]*dynamodb.AttributeValue{
-			"userid": {
-				S: aws.String(username),
-			},
-			"moment": {
-				S: aws.String(moment.Format(time.RFC3339)),
-			},
+func (db *DB) SetLastCommunicationWith(userConfig *igor.UserConfig, username string, moment time.Time) error {
+	_, err := db.dynamo.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String("igor"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"userid": {S: aws.String(userConfig.Identity)},
 		},
+		UpdateExpression:          aws.String("SET lastCommunication.#username = :new"),
+		ExpressionAttributeNames:  map[string]*string{"#username": aws.String(username)},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":new": {S: aws.String(moment.Format(time.RFC3339))}},
 	})
 	if err != nil {
-		return err
+		_, err = db.dynamo.UpdateItem(&dynamodb.UpdateItemInput{
+			TableName: aws.String("igor"),
+			Key: map[string]*dynamodb.AttributeValue{
+				"userid": {S: aws.String(userConfig.Identity)},
+			},
+			UpdateExpression:          aws.String("SET lastCommunication = if_not_exists(lastCommunication, :empty)"),
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":empty": {M: map[string]*dynamodb.AttributeValue{}}},
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// GetActivationTimeStart returns the "activeFrom" from DynamoDB configuration
-func (db *DB) GetActivationTimeStart() time.Time {
-	return db.activeFrom
-}
-
-// GetResponseMessage will return the active reponse message
-func (db *DB) GetResponseMessage() (string, error) {
-	resp, err := db.dynamo.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("igor-config"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				S: aws.String("message"),
-			},
-		},
-		AttributesToGet: []*string{
-			aws.String("value"),
-		},
+func (db *DB) GetAllConfigs() (allConfigs []*igor.UserConfig, err error) {
+	allConfigs = make([]*igor.UserConfig, 0)
+	resp, err := db.dynamo.Scan(&dynamodb.ScanInput{
+		TableName: aws.String("igor"),
 	})
 	if err != nil {
-		return "", err
+		return nil, nil
 	}
-	if resp.Item == nil {
-		log.Fatal("Seems that response message template is not available in the DB")
+	if resp.Items == nil {
+		return nil, nil
 	}
-	templ := *resp.Item["value"].S
-	buff := new(bytes.Buffer)
-	sweaters := struct {
-		From  string
-		Until string
-	}{
-		db.activeFrom.Format(time.RFC822),
-		db.activeUntil.Format(time.RFC822),
+	for _, item := range resp.Items {
+		identity := *item["userid"].S
+		messageFormat := *item["message"].S
+		flowdockUsername := *item["flowdockUsername"].S
+		flowdockToken := *item["flowdockToken"].S
+		var lastCommunication map[string]time.Time
+		lastCommunicationMap := item["lastCommunication"].M
+		for user, lastTime := range lastCommunicationMap {
+			lastTimeParsed, err := time.Parse(time.RFC822, *lastTime.S)
+			if err != nil {
+				log.Fatalf("Last time %s couldn't be parsed, err: %+v", lastTime, err)
+				return nil, err
+			}
+			lastCommunication[user] = lastTimeParsed
+		}
+		parsedActiveFrom, err := time.Parse(time.RFC822, *item["activeFrom"].S)
+		if err != nil {
+			log.Fatalf("Active from couldn't be parsed, err: %+v", err)
+			return nil, err
+		}
+		parsedActiveUntil, err := time.Parse(time.RFC822, *item["activeUntil"].S)
+		if err != nil {
+			log.Fatalf("Active until couldn't be parsed, err: %+v", err)
+			return nil, err
+		}
+		newConfig := igor.New(identity, messageFormat, flowdockUsername, flowdockToken, parsedActiveFrom, parsedActiveUntil, lastCommunication)
+		allConfigs = append(allConfigs, newConfig)
 	}
-	tmpl, err := template.New("template").Parse(templ + messageSuffix)
-	if err != nil {
-		panic(err)
-	}
-	err = tmpl.Execute(buff, sweaters)
-	if err != nil {
-		panic(err)
-	}
-	return buff.String(), nil
+	return allConfigs, err
 }

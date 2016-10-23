@@ -4,45 +4,83 @@
 <head>
 	<meta charset='utf-8'>
 	<title>Igor Control Panel</title>
-	<meta name="google-signin-client_id" content="GOOGLE_OAUTH2_CLIENT_ID" />
 	<link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
 	<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css'>
 	<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css'>
-	<style type="text/css" media="all">
-		body {
-			margin-top: 30px;
-		}
-	</style>
+	<link media='all' rel='stylesheet' href='styles.css'>
 </head>
+
 <body>
-	<div class='container'>
+	<div class='container' id="app">
 		<div class='row'>
 			<div class='nine columns'>
-				<h3>Igor Control Panel</h3>
+				<h3>Igor <b>BETA</b> Control Panel</h3>
 			</div>
-			<div class='three columns'>
-				<span class='navbar-padding u-pull-right u-full-width'>
-            		<span class="g-signin2" data-onsuccess="googleSignIn"></span>
-				</span>
-				<span class='u-full-width' id="app">
+			<div class='three columns' v-cloak>
+				<span class='u-full-width'>
 					{{welcomeMessage}}					
+				</span>
+				<span class='navbar-padding u-pull-right u-full-width'>
+					<input type="button" value="Sign out" v-if="eligibleForConfiguration" v-on:click="signOut">
+					<input type="button" value="Sign in" v-if="notSignedIn" v-on:click="refreshGoogleCredentials">
 				</span>
 			</div>
 		</div>
+		<div v-if="!eligibleForConfiguration && notSignedIn">
+			<div class="row">
+				<div class="twelve columns centered title">
+					<h2>Please Sign In</h2>
+				</div>
+				<div class="twelve columns centered">
+					You need to sign in for your personal configuration could be fetched
+				</div>
+			</div>
+		</div>
+		<form v-if="eligibleForConfiguration" v-cloak>
+			<div class='row'>
+				<div class="ten columns">
+					<label for="message">Message</label>
+					<textarea class="u-full-width" placeholder="Hi, I am not available from {{.From}} until {{.Until}}" v-model="message" id="message"></textarea>
+				</div>
+			</div>
+			<div class='row'>
+				<div class="five columns">
+					<label for="flowdockUsername">Flowdock Nick</label>
+					<input v-model="flowdockUsername" class='u-full-width' id="flowdockUsername">
+				</div>
+				<div class="five columns">
+					<label for="flowdockToken">Flowdock Token</label>
+					<input v-model="flowdockToken" class='u-full-width' id="flowdockToken" placeholder="visit https://www.flowdock.com/account/tokens">
+				</div>
+			</div>
+			<div class='row'>
+				<div class="five columns">
+					<label for="activeFrom">Active From</label>
+					<input v-model="activeFrom" class='u-full-width' id="activeFrom">
+				</div>
+				<div class="five columns">
+					<label for="activeUntil">Active Until</label>
+					<input v-model="activeUntil" class='u-full-width' id="activeUntil">
+				</div>
+			</div>
+			<input class="button-primary" type="button" value="Save my configuration" v-on:click="saveConfiguration">
+			<span class="u-cf" v-if="savedFlash">Configuration Saved!</span>
+		</form>
 	</div>
 	<script>
 		var igor = {
 			"config": {
 				"cognitoPoolId": "GENERATED_COGNITO_POOL_ID",
-				"awsRegion": "AWS_REGION"
+				"awsRegion": "AWS_REGION",
+				"googleClientId": 'GOOGLE_OAUTH2_CLIENT_ID'
 			}
 		}
 	</script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.6.9/aws-sdk.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.min.js"></script>
+	<script src="https://apis.google.com/js/api.js"></script>
 	<script src="/app.js"></script>
-	<script src="https://apis.google.com/js/platform.js"></script>
 </body>
 
 </html>
