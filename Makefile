@@ -16,13 +16,13 @@ ${RELEASE_SOURCES}: $(SOURCES)
 include gomakefiles/semaphore.mk
 
 $(MAIN_APP_DIR)/config.toml: $(MAIN_APP_DIR)/config.toml.template
+	@. personal.env
 ifndef FLOWDOCK_API_TOKEN
 	$(error FLOWDOCK_API_TOKEN parameter must be set)
 endif
 ifndef FLOWDOCK_NICK
 	$(error FLOWDOCK_NICK parameter must be set)
 endif
-	@. personal.env
 	@cat $(MAIN_APP_DIR)/config.toml.template | sed \
 		-e "s/FLOWDOCK_API_TOKEN/$$FLOWDOCK_API_TOKEN/" \
 		-e "s/FLOWDOCK_NICK/$$FLOWDOCK_NICK/" \
