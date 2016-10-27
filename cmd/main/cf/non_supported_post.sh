@@ -8,3 +8,6 @@ roleArn=`aws cloudformation describe-stacks --stack-name igor | \
 aws cognito-identity set-identity-pool-roles \
     --identity-pool-id `readFromSettings GENERATED_COGNITO_POOL_ID` \
     --roles authenticated=$roleArn
+
+cd ../../../
+make deploy-site
