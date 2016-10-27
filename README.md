@@ -36,8 +36,4 @@ Other things you want to do are like:
 
 ### ... configure
 
-For now, until phase 3 is done, you need to manually enter following values in the `igor-config` table:
-
-- id=`message`, value=`Hi, I am unavailable from {{.From}} until {{.Until}}. It might be I don't answer your message until then.`
-- id=`activeFrom`, value=`14 Oct 16 06:00 UTC`
-- id=`activeUntil`, value=`18 Oct 16 06:00 UTC`
+Log in to the S3 page and login using your Google credentials. Configure the application. **Profit**
