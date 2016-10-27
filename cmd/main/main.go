@@ -24,7 +24,9 @@ func main() {
 
 	// FIXME: parallelism
 	for _, userConfig := range userConfigs {
-		for name, lastMentioned := range userConfig.GetNonAnsweredMentions() {
+		nonAnsweredMentions := userConfig.GetNonAnsweredMentions()
+		for name, lastMentioned := range nonAnsweredMentions {
+			log.Printf("Non-answered mention to: %v", name)
 			igor.MarkAnswered(userConfig, name)
 			if lastMentioned.Flow != "" {
 				userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID)

@@ -31,20 +31,22 @@ func (db *DB) SetLastCommunicationWith(userConfig *igor.UserConfig, username str
 	_, err := db.dynamo.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String("igor"),
 		Key: map[string]*dynamodb.AttributeValue{
-			"userid": {S: aws.String(userConfig.Identity)},
+			"userId": {S: aws.String(userConfig.Identity)},
 		},
 		UpdateExpression:          aws.String("SET lastCommunication.#username = :new"),
 		ExpressionAttributeNames:  map[string]*string{"#username": aws.String(username)},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":new": {S: aws.String(moment.Format(time.RFC3339))}},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":new": {S: aws.String(moment.Format(time.RFC822))}},
 	})
 	if err != nil {
 		_, err = db.dynamo.UpdateItem(&dynamodb.UpdateItemInput{
 			TableName: aws.String("igor"),
 			Key: map[string]*dynamodb.AttributeValue{
-				"userid": {S: aws.String(userConfig.Identity)},
+				"userId": {S: aws.String(userConfig.Identity)},
 			},
-			UpdateExpression:          aws.String("SET lastCommunication = if_not_exists(lastCommunication, :empty)"),
-			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":empty": {M: map[string]*dynamodb.AttributeValue{}}},
+			UpdateExpression: aws.String("SET lastCommunication = if_not_exists(lastCommunication, :new)"),
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":new": {M: map[string]*dynamodb.AttributeValue{
+				username: &dynamodb.AttributeValue{S: aws.String(moment.Format(time.RFC822))},
+			}}},
 		})
 		if err != nil {
 			return err
@@ -59,25 +61,27 @@ func (db *DB) GetAllConfigs() (allConfigs []*igor.UserConfig, err error) {
 		TableName: aws.String("igor"),
 	})
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	if resp.Items == nil {
 		return nil, nil
 	}
 	for _, item := range resp.Items {
-		identity := *item["userid"].S
+		identity := *item["userId"].S
 		messageFormat := *item["message"].S
 		flowdockUsername := *item["flowdockUsername"].S
 		flowdockToken := *item["flowdockToken"].S
-		var lastCommunication map[string]time.Time
-		lastCommunicationMap := item["lastCommunication"].M
-		for user, lastTime := range lastCommunicationMap {
-			lastTimeParsed, err := time.Parse(time.RFC822, *lastTime.S)
-			if err != nil {
-				log.Fatalf("Last time %s couldn't be parsed, err: %+v", lastTime, err)
-				return nil, err
+		lastCommunication := make(map[string]time.Time)
+		if commMap, ok := item["lastCommunication"]; ok {
+			lastCommunicationMap := commMap.M
+			for user, lastTime := range lastCommunicationMap {
+				lastTimeParsed, err := time.Parse(time.RFC822, *lastTime.S)
+				if err != nil {
+					log.Fatalf("Last time %s couldn't be parsed, err: %+v", lastTime, err)
+					return nil, err
+				}
+				lastCommunication[user] = lastTimeParsed
 			}
-			lastCommunication[user] = lastTimeParsed
 		}
 		parsedActiveFrom, err := time.Parse(time.RFC822, *item["activeFrom"].S)
 		if err != nil {
