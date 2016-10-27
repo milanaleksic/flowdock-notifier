@@ -38,15 +38,9 @@
 		</div>
 		<form v-if="eligibleForConfiguration" v-cloak>
 			<div class='row'>
-				<div class="ten columns">
-					<label for="message">Message</label>
-					<textarea class="u-full-width" placeholder="Hi, I am not available from {{.From}} until {{.Until}}" v-model="message" id="message"></textarea>
-				</div>
-			</div>
-			<div class='row'>
 				<div class="five columns">
 					<label for="flowdockUsername">Flowdock Nick</label>
-					<input v-model="flowdockUsername" class='u-full-width' id="flowdockUsername">
+					<input v-model="flowdockUsername" class='u-full-width' id="flowdockUsername" placeholder="Your Flowdock handle/nick, without @">
 				</div>
 				<div class="five columns">
 					<label for="flowdockToken">Flowdock Token</label>
@@ -61,6 +55,14 @@
 				<div class="five columns">
 					<label for="activeUntil">Active Until</label>
 					<input v-model="activeUntil" class='u-full-width' id="activeUntil">
+				</div>
+			</div>
+			<div class='row'>
+				<div class="ten columns">
+					<label for="message">Message</label>
+					<textarea class="u-full-width without-margin-bottom" placeholder="Hi, I am not available from {{.From}} until {{.Until}}"
+						v-model="message" id="message"></textarea>
+					<div class="u-pull-right" v-once>{{helpMessageForPlaceholders}}</div>
 				</div>
 			</div>
 			<input class="button-primary" type="button" value="Save my configuration" v-on:click="saveConfiguration">

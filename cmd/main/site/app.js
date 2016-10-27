@@ -9,6 +9,7 @@ var app = new Vue({
         savedFlash: false,
         eligibleForConfiguration: false,
         notSignedIn: false,
+        helpMessageForPlaceholders: 'Tip: you can use following placeholders in the Message: {{.From}} and {{.Until}}',
         // From Dynamo
         message: "",
         activeFrom: "",
@@ -47,11 +48,19 @@ var app = new Vue({
                     } else {
                         that.notSignedIn = false;
                         that.eligibleForConfiguration = true;
-                        that.flowdockToken = data.Item.flowdockToken;
-                        that.flowdockUsername = data.Item.flowdockUsername;
-                        that.message = data.Item.message;
-                        that.activeFrom = data.Item.activeFrom;
-                        that.activeUntil = data.Item.activeUntil;
+                        if (data.Item) {
+                            that.flowdockToken = data.Item.flowdockToken;
+                            that.flowdockUsername = data.Item.flowdockUsername;
+                            that.message = data.Item.message;
+                            that.activeFrom = data.Item.activeFrom;
+                            that.activeUntil = data.Item.activeUntil;
+                        } else {
+                            that.flowdockToken = "";
+                            that.flowdockUsername = "";
+                            that.message = "Hi, I am unavailable from {{.From}} until {{.Until}}. It might be I don't answer your message until then.";
+                            that.activeFrom = "01 Jan 16 06:00 UTC";
+                            that.activeUntil = "31 Jan 16 20:00 UTC";
+                        }
                     }
                 });
                 return "Hi " + this.name

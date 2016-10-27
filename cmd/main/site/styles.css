@@ -9,9 +9,15 @@ body {
 [v-cloak] {
     display: none;
 }
+
 .centered {
     text-align: center;
 }
+
 .title {
     padding-top: 100px;
+}
+
+.without-margin-bottom {
+    margin-bottom: 0;
 }
