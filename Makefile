@@ -74,19 +74,16 @@ invoke-lambda:
 
 .PHONY: prepare-site
 prepare-site:
-	@. personal.env && cat $(MAIN_APP_DIR)/site/index.html \
+	@. personal.env && cat $(MAIN_APP_DIR)/site/config.template.js \
 		| sed \
 			-e "s/GOOGLE_OAUTH2_CLIENT_ID/$$GOOGLE_OAUTH2_CLIENT_ID/g" \
 			-e "s/GENERATED_COGNITO_POOL_ID/$$GENERATED_COGNITO_POOL_ID/g" \
 			-e "s/AWS_REGION/$$AWS_REGION/g" \
-		> $(MAIN_APP_DIR)/site/index_expanded.html
+		> $(MAIN_APP_DIR)/site/config.js
 
 .PHONY: deploy-site
 deploy-site: prepare-site
-	@$(aws) s3 cp --acl public-read  \
-		  /data/site/index_expanded.html \
-		  s3://$$BUCKET_SITE/index.html
-	@$(aws) s3 sync --acl public-read --exclude '*.html' \
+	@$(aws) s3 sync --acl public-read --exclude '*.template.js' \
 		  /data/site/ \
 		  s3://$$BUCKET_SITE/
 

@@ -67,20 +67,12 @@
 			<span class="u-cf" v-if="savedFlash">Configuration Saved!</span>
 		</form>
 	</div>
-	<script>
-		var igor = {
-			"config": {
-				"cognitoPoolId": "GENERATED_COGNITO_POOL_ID",
-				"awsRegion": "AWS_REGION",
-				"googleClientId": 'GOOGLE_OAUTH2_CLIENT_ID'
-			}
-		}
-	</script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.6.9/aws-sdk.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.min.js"></script>
 	<script src="https://apis.google.com/js/api.js"></script>
-	<script src="/app.js"></script>
+	<script src="config.js"></script>
+	<script src="app.js"></script>
 </body>
 
 </html>

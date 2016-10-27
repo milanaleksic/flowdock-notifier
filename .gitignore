@@ -6,4 +6,4 @@ debug
 personal.env
 .vscode
 config.toml
-index_expanded.html
+cmd/main/site/config.js
