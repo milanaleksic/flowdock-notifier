@@ -109,16 +109,22 @@ var app = new Vue({
             if (this.email) {
                 var db = new AWS.DynamoDB.DocumentClient();
                 var that = this;
-                db.put({
+                db.update({
                     TableName: 'igor',
-                    Item: {
-                        userId: this.id,
-                        eligibleForConfiguration: this.eligibleForConfiguration,
-                        flowdockToken: this.flowdockToken,
-                        flowdockUsername: this.flowdockUsername,
-                        message: this.message,
-                        activeFrom: this.activeFrom,
-                        activeUntil: this.activeUntil
+                    Key: {
+                        "userId": this.id,
+                    },
+                    UpdateExpression: "set flowdockToken=:flowdockToken, " +
+                    "flowdockUsername=:flowdockUsername," +
+                    "message=:message," +
+                    "activeFrom=:activeFrom," +
+                    "activeUntil=:activeUntil,",
+                    ExpressionAttributeValues: {
+                        ":flowdockToken": this.flowdockToken,
+                        ":flowdockUsername": this.flowdockUsername,
+                        ":message": this.message,
+                        ":activeFrom": this.activeFrom,
+                        ":activeUntil": this.activeUntil
                     }
                 }, function (err, data) {
                     if (err) {
