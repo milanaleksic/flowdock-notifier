@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"log"
 
 	"github.com/milanaleksic/igor/core"
@@ -13,8 +10,6 @@ import (
 var Version = "undefined"
 
 func main() {
-	fmt.Printf("Igor Flowdock Notifier version %v, arguments received: %+v\n", Version, os.Args[1:])
-
 	igor := core.New()
 	userConfigs, err := igor.GetActiveUserConfigurations()
 	if err != nil {
