@@ -22,7 +22,6 @@
 				</span>
 				<span class='navbar-padding u-pull-right u-full-width'>
 					<input type="button" value="Sign out" v-if="eligibleForConfiguration" v-on:click="signOut">
-					<input type="button" value="Sign in" v-if="notSignedIn" v-on:click="refreshGoogleCredentials">
 				</span>
 			</div>
 		</div>
@@ -33,6 +32,10 @@
 				</div>
 				<div class="twelve columns centered">
 					You need to sign in for your personal configuration to be fetched
+				</div>
+				<div class="twelve columns centered">
+					<p>&nbsp;</p>
+					<input type="button" class="button-primary" value="Sign in" v-if="notSignedIn" v-on:click="refreshGoogleCredentials">					
 				</div>
 			</div>
 		</div>
