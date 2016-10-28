@@ -21,3 +21,8 @@ body {
 .without-margin-bottom {
     margin-bottom: 0;
 }
+
+textarea {
+    resize: none;
+    height: 90px;
+}
