@@ -66,7 +66,7 @@
 				</div>
 			</div>
 			<input class="button-primary" type="button" value="Save my configuration" v-on:click="saveConfiguration">
-			<span class="u-cf" v-if="savedFlash">Configuration Saved!</span>
+			<span class="u-cf" v-if="flashMessage">{{flashMessage}}</span>
 		</form>
 	</div>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.6.9/aws-sdk.min.js"></script>

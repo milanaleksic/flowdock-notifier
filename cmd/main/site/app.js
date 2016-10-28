@@ -6,7 +6,7 @@ var app = new Vue({
         id: "",
         name: "",
         // UX
-        savedFlash: false,
+        flashMessage: "",
         eligibleForConfiguration: false,
         notSignedIn: false,
         helpMessageForPlaceholders: 'Tip: you can use following placeholders in the Message: {{.From}} and {{.Until}}',
@@ -118,7 +118,7 @@ var app = new Vue({
                     "flowdockUsername=:flowdockUsername," +
                     "message=:message," +
                     "activeFrom=:activeFrom," +
-                    "activeUntil=:activeUntil,",
+                    "activeUntil=:activeUntil",
                     ExpressionAttributeValues: {
                         ":flowdockToken": this.flowdockToken,
                         ":flowdockUsername": this.flowdockUsername,
@@ -128,10 +128,14 @@ var app = new Vue({
                     }
                 }, function (err, data) {
                     if (err) {
-                        console.error("Unable to save the data. Error JSON:", JSON.stringify(err, null, 2));
+                        if ('message' in err) {
+                            that.flashMessage = "ERROR: " + err.message;
+                        } else {
+                            that.flashMessage = "ERROR: " + JSON.stringify(err, null, 2)
+                        }
                     } else {
-                        that.savedFlash = true;
-                        window.setTimeout(function () { that.savedFlash = false }, 2000)
+                        that.flashMessage = "Configuration Saved!";
+                        window.setTimeout(function () { that.flashMessage = "" }, 2000)
                     }
                 });
                 return "Hi " + this.name
