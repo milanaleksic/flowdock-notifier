@@ -141,7 +141,7 @@
                                     "Action": [
                                         "dynamodb:*"
                                     ],
-                                    "Resource": "arn:aws:dynamodb:eu-west-1:*:*"
+                                    "Resource": "arn:aws:dynamodb:*:*:*"
                                 }
                             ]
                         }

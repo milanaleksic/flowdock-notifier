@@ -9,6 +9,7 @@ function aws() {
     -v $ROOT_APP_DIR:/data \
     --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
     --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+    -u $UID \
     garland/aws-cli-docker \
     aws --region $AWS_REGION $*
 }
