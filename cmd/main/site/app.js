@@ -9,7 +9,7 @@ var app = new Vue({
         flashMessage: "",
         eligibleForConfiguration: false,
         notSignedIn: false,
-        helpMessageForPlaceholders: 'Tip: you can use following placeholders in the Message: {{.From}} and {{.Until}}',
+        helpMessageForPlaceholders: 'Placeholders: <b>{{.From}}</b>, <b>{{.Until}}</b>',
         // From Dynamo
         message: "",
         activeFrom: "",
