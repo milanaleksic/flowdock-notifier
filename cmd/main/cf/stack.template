@@ -42,7 +42,7 @@
                     "S3Bucket": {
                         "Ref": "DeploymentBucket"
                     },
-                    "S3Key": "igor.zip"
+                    "S3Key": "deployment/igor.zip"
                 },
                 "Handler": "main.handler",
                 "MemorySize": 128,

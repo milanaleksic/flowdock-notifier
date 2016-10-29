@@ -36,7 +36,7 @@ unform: $(MAIN_APP_DIR)/archive.zip
 form: $(MAIN_APP_DIR)/archive.zip
 	@$(aws) s3 cp  \
 		  /data/archive.zip \
-		  s3://$$BUCKET_DEPLOYMENT/$(APP_NAME).zip
+		  s3://$$BUCKET_DEPLOYMENT/deployment/$(APP_NAME).zip
 	@$(aws) cloudformation create-stack  \
 		  --stack-name igor \
 		  --template-body file:///data/cf/stack.template \
