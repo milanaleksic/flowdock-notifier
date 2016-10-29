@@ -157,8 +157,7 @@
                     "Ref": "WebSiteBucket"
                 },
                 "WebsiteConfiguration": {
-                    "IndexDocument": "index.html",
-                    "ErrorDocument": "error.html"
+                    "IndexDocument": "index.html"
                 }
             },
             "DeletionPolicy": "Retain"

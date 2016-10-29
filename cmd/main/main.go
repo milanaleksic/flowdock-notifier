@@ -9,6 +9,9 @@ import (
 // Version carries the program version (should be setup in compilation time to a proper value)
 var Version = "undefined"
 
+// SiteDeployment contains correct location of the website where the dpeloyment shall occur
+var SiteDeployment = "undefined"
+
 func main() {
 	igor := core.New()
 	userConfigs, err := igor.GetActiveUserConfigurations()
@@ -24,9 +27,9 @@ func main() {
 			log.Printf("Non-answered mention to: %v", name)
 			igor.MarkAnswered(userConfig, name)
 			if lastMentioned.Flow != "" {
-				userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID)
+				userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID, SiteDeployment)
 			} else {
-				userConfig.RespondToPerson(lastMentioned.UserID)
+				userConfig.RespondToPerson(lastMentioned.UserID, SiteDeployment)
 			}
 		}
 	}

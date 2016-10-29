@@ -12,10 +12,6 @@ import (
 	"github.com/milanaleksic/flowdock"
 )
 
-const (
-	messageSuffix = " Powered by [Igor](https://github.com/milanaleksic/igor)"
-)
-
 type UserConfig struct {
 	Identity                string
 	activeFrom, activeUntil time.Time
@@ -26,7 +22,7 @@ type UserConfig struct {
 }
 
 func New(identity, messageFormat, flowdockUsername, flowdockToken string, activeFrom, activeUntil time.Time, lastCommunication map[string]time.Time) *UserConfig {
-	templ, err := template.New("template").Parse(messageFormat + messageSuffix)
+	templ, err := template.New("template").Parse(messageFormat)
 	if err != nil {
 		panic(err)
 	}
@@ -98,23 +94,29 @@ func (userConfig *UserConfig) addMessageToResult(message flowdock.MessageEvent, 
 }
 
 // RespondToFlow allows to send a message to a certain flow/thread using Flowdock client
-func (userConfig *UserConfig) RespondToFlow(flow, thread string) error {
+func (userConfig *UserConfig) RespondToFlow(flow, thread, siteLocation string) error {
 	msg, err := userConfig.GetResponseMessage()
 	if err != nil {
 		return fmt.Errorf("Could not answer to flow %s, thread %s because of %+v", flow, thread, err)
 	}
-	log.Printf("Responding to flow %s, thread %s, msg %s", flow, thread, msg)
-	return userConfig.client.RespondToFlow(flow, thread, msg)
+	msgWithSuffix := addSuffix(msg, siteLocation)
+	log.Printf("Responding to flow %s, thread %s, msg %s", flow, thread, msgWithSuffix)
+	return userConfig.client.RespondToFlow(flow, thread, msgWithSuffix)
 }
 
 // RespondToPerson allows to send a private message to a certain user using Flowdock client
-func (userConfig *UserConfig) RespondToPerson(userID int64) error {
+func (userConfig *UserConfig) RespondToPerson(userID int64, siteLocation string) error {
 	msg, err := userConfig.GetResponseMessage()
 	if err != nil {
 		return fmt.Errorf("Could not answer to user %d because of %+v", userID, err)
 	}
-	log.Printf("Responding to user %d, msg %s", userID, msg)
-	return userConfig.client.RespondToPerson(userID, msg)
+	msgWithSuffix := addSuffix(msg, siteLocation)
+	log.Printf("Responding to user %d, msg %s", userID, msgWithSuffix)
+	return userConfig.client.RespondToPerson(userID, msgWithSuffix)
+}
+
+func addSuffix(mainContents, suffix string) string {
+	return mainContents + fmt.Sprintf(" Powered by [Igor](%s)", suffix)
 }
 
 // GetResponseMessage will return the active reponse message

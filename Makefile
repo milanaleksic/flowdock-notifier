@@ -9,7 +9,8 @@ SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
 
 $(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES)
-	cd $(MAIN_APP_DIR)/ && go build -ldflags '-X main.Version=${VERSION}' -o ${APP_NAME}
+	. personal.env && cd $(MAIN_APP_DIR)/ && go build -ldflags \
+		"-X main.Version=${VERSION} -X main.SiteDeployment=http://$$BUCKET_SITE.s3-website.$$AWS_REGION.amazonaws.com" -o ${APP_NAME}
 
 ${RELEASE_SOURCES}: $(SOURCES)
 
