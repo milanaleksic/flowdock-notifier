@@ -33,10 +33,7 @@ unform: $(MAIN_APP_DIR)/archive.zip
 		  --stack-name igor
 
 .PHONY: form
-form: $(MAIN_APP_DIR)/archive.zip
-	@$(aws) s3 cp  \
-		  /data/archive.zip \
-		  s3://$$BUCKET_DEPLOYMENT/deployment/$(APP_NAME).zip
+form: $(MAIN_APP_DIR)/archive.zip lambda-upload
 	@$(aws) cloudformation create-stack  \
 		  --stack-name igor \
 		  --template-body file:///data/cf/stack.template \
@@ -59,21 +56,27 @@ reform:
 		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
-.PHONY: update-lambda
-update-lambda: $(MAIN_APP_DIR)/archive.zip
+.PHONY: lambda-upload
+lambda-upload: $(MAIN_APP_DIR)/archive.zip
+	@$(aws) s3 cp  \
+		  /data/archive.zip \
+		  s3://$$BUCKET_DEPLOYMENT/deployment/$(APP_NAME).zip
+
+.PHONY: lambda-update-from-local
+lambda-update-from-local: $(MAIN_APP_DIR)/archive.zip
 	@$(aws) lambda update-function-code \
 		  --function-name $(APP_NAME) \
 		  --zip-file fileb:///data/archive.zip 
 
-.PHONY: invoke-lambda
-invoke-lambda:
+.PHONY: lambda-invoke
+lambda-invoke:
 	@$(aws) lambda invoke \
 		  --log-type Tail \
 		  --function-name $(APP_NAME) \
 		  /tmp/invoke_output | ./jq '.LogResult' -r | base64 --decode
 
-.PHONY: prepare-site
-prepare-site:
+.PHONY: site-prepare
+site-prepare:
 	@. personal.env && cat $(MAIN_APP_DIR)/site/config.template.js \
 		| sed \
 			-e "s/GOOGLE_OAUTH2_CLIENT_ID/$$GOOGLE_OAUTH2_CLIENT_ID/g" \
@@ -81,8 +84,8 @@ prepare-site:
 			-e "s/AWS_REGION/$$AWS_REGION/g" \
 		> $(MAIN_APP_DIR)/site/config.js
 
-.PHONY: deploy-site
-deploy-site: prepare-site
+.PHONY: site-deploy
+site-deploy: site-prepare
 	@$(aws) s3 sync --acl public-read --exclude '*.template.js' \
 		  /data/site/ \
 		  s3://$$BUCKET_SITE/
