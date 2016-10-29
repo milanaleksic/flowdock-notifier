@@ -37,3 +37,5 @@ Other things you want to do are like:
 ### ... configure
 
 Log in to the S3 page and login using your Google credentials. Configure the application. **Profit**
+
+![Control panel screenshot](login_screen.png "Control panel screenshot")
