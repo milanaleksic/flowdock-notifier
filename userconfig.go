@@ -126,8 +126,8 @@ func (userConfig *UserConfig) GetResponseMessage() (string, error) {
 		From  string
 		Until string
 	}{
-		From:  userConfig.activeFrom.Format(time.RFC3339),
-		Until: userConfig.activeUntil.Format(time.RFC3339),
+		From:  userConfig.activeFrom.Format(time.RFC822),
+		Until: userConfig.activeUntil.Format(time.RFC822),
 	}
 
 	err := userConfig.template.Execute(buff, dataForTemplate)
