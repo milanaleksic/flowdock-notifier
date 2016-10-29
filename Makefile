@@ -54,7 +54,7 @@ reform:
 		  --parameters \
 		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
 		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE \
-		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID
+		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID || true
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
 .PHONY: lambda-upload
