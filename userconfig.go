@@ -99,26 +99,22 @@ func (userConfig *UserConfig) addMessageToResult(message flowdock.MessageEvent, 
 
 // RespondToFlow allows to send a message to a certain flow/thread using Flowdock client
 func (userConfig *UserConfig) RespondToFlow(flow, thread string) error {
-	if msg, err := userConfig.GetResponseMessage(); err != nil {
+	msg, err := userConfig.GetResponseMessage()
+	if err != nil {
 		return fmt.Errorf("Could not answer to flow %s, thread %s because of %+v", flow, thread, err)
-	} else {
-		log.Printf("Would have responded to flow %s, thread %s, msg %s", flow, thread, msg)
-		return nil
-		// FIXME: activate when migration complete
-		// return userConfig.client.RespondToFlow(flow, thread, msg)
 	}
+	log.Printf("Responding to flow %s, thread %s, msg %s", flow, thread, msg)
+	return userConfig.client.RespondToFlow(flow, thread, msg)
 }
 
 // RespondToPerson allows to send a private message to a certain user using Flowdock client
 func (userConfig *UserConfig) RespondToPerson(userID int64) error {
-	if msg, err := userConfig.GetResponseMessage(); err != nil {
+	msg, err := userConfig.GetResponseMessage()
+	if err != nil {
 		return fmt.Errorf("Could not answer to user %d because of %+v", userID, err)
-	} else {
-		log.Printf("Would have responded to user %d, msg %s", userID, msg)
-		return nil
-		// FIXME: activate when migration complete
-		// return userConfig.client.RespondToPerson(userID, msg)
 	}
+	log.Printf("Responding to user %d, msg %s", userID, msg)
+	return userConfig.client.RespondToPerson(userID, msg)
 }
 
 // GetResponseMessage will return the active reponse message
