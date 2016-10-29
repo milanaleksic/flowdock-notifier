@@ -70,7 +70,7 @@ invoke-lambda:
 	@$(aws) lambda invoke \
 		  --log-type Tail \
 		  --function-name $(APP_NAME) \
-		  /tmp/invoke_output | jq '.LogResult' -r | base64 --decode
+		  /tmp/invoke_output | ./jq '.LogResult' -r | base64 --decode
 
 .PHONY: prepare-site
 prepare-site:
@@ -112,10 +112,12 @@ endif
 .PHONY: get-status
 get-status:
 	@$(aws) cloudformation describe-stacks --stack-name igor \
-		| jq '.Stacks[0].StackStatus' -r
+		| ./jq '.Stacks[0].StackStatus' -r
 
 .PHONY: prepare
-prepare: prepare_metalinter prepare_github_release
+prepare: prepare_metalinter
+	@curl -Lo jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+	@chmod +x jq
 
 .PHONY: clean
 clean: clean_common
