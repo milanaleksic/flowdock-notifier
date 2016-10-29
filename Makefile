@@ -62,6 +62,10 @@ lambda-upload: $(MAIN_APP_DIR)/archive.zip
 	@$(aws) s3 cp  \
 		  /data/archive.zip \
 		  s3://$$BUCKET_DEPLOYMENT/deployment/$(APP_NAME).zip
+	@$(aws) lambda update-function-code \
+		  --function-name $(APP_NAME) \
+		  --s3-bucket $$BUCKET_DEPLOYMENT \
+		  --s3-key deployment/$(APP_NAME).zip
 
 .PHONY: lambda-update-from-local
 lambda-update-from-local: $(MAIN_APP_DIR)/archive.zip
