@@ -20,6 +20,7 @@ func New() *Igor {
 	}
 }
 
+// GetActiveUserConfigurations returns all configs from database which are active at this time
 func (i *Igor) GetActiveUserConfigurations() (activeConfigs []*igor.UserConfig, err error) {
 	activeConfigs = make([]*igor.UserConfig, 0)
 	configs, err := i.database.GetAllConfigs()
@@ -34,7 +35,7 @@ func (i *Igor) GetActiveUserConfigurations() (activeConfigs []*igor.UserConfig, 
 	return activeConfigs, nil
 }
 
-// Answer will send a message in the adequate Flow/Thread
+// MarkAnswered will mark moment when communication with a certain user occured as part of the user configuration
 func (i *Igor) MarkAnswered(userConfig *igor.UserConfig, name string) {
 	if err := i.database.SetLastCommunicationWith(userConfig, name, time.Now()); err != nil {
 		log.Fatalf("Could not write to DB, err=%+v", err)

@@ -6,9 +6,6 @@ import (
 	"github.com/milanaleksic/igor/core"
 )
 
-// Version carries the program version (should be setup in compilation time to a proper value)
-var Version = "undefined"
-
 // SiteDeployment contains correct location of the website where the dpeloyment shall occur
 var SiteDeployment = "undefined"
 
@@ -27,9 +24,13 @@ func main() {
 			log.Printf("Non-answered mention to: %v", name)
 			igor.MarkAnswered(userConfig, name)
 			if lastMentioned.Flow != "" {
-				userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID, SiteDeployment)
+				if err := userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID, SiteDeployment); err != nil {
+					log.Panicf("Could not respond to flow, err=%v", err)
+				}
 			} else {
-				userConfig.RespondToPerson(lastMentioned.UserID, SiteDeployment)
+				if err := userConfig.RespondToPerson(lastMentioned.UserID, SiteDeployment); err != nil {
+					log.Panicf("Could not respond to flow, err=%v", err)
+				}
 			}
 		}
 	}

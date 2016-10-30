@@ -55,6 +55,7 @@ func (db *DB) SetLastCommunicationWith(userConfig *igor.UserConfig, username str
 	return nil
 }
 
+// GetAllConfigs returns all configurations available in the DB at this time
 func (db *DB) GetAllConfigs() (allConfigs []*igor.UserConfig, err error) {
 	allConfigs = make([]*igor.UserConfig, 0)
 	resp, err := db.dynamo.Scan(&dynamodb.ScanInput{
@@ -76,23 +77,23 @@ func (db *DB) GetAllConfigs() (allConfigs []*igor.UserConfig, err error) {
 		if commMap, ok := item["lastCommunication"]; ok {
 			lastCommunicationMap := commMap.M
 			for user, lastTime := range lastCommunicationMap {
-				lastTimeParsed, err := time.Parse(time.RFC3339, *lastTime.S)
-				if err != nil {
-					log.Fatalf("Last time %s couldn't be parsed, err: %+v", lastTime, err)
-					return nil, err
+				lastTimeParsed, errParse := time.Parse(time.RFC3339, *lastTime.S)
+				if errParse != nil {
+					log.Fatalf("Last time %s couldn't be parsed, errParse: %+v", lastTime, errParse)
+					return nil, errParse
 				}
 				lastCommunication[user] = lastTimeParsed
 			}
 		}
-		parsedActiveFrom, err := time.Parse(time.RFC3339, *item["activeFrom"].S)
-		if err != nil {
-			log.Fatalf("Active from couldn't be parsed, err: %+v", err)
-			return nil, err
+		parsedActiveFrom, errParse := time.Parse(time.RFC3339, *item["activeFrom"].S)
+		if errParse != nil {
+			log.Fatalf("Active from couldn't be parsed, errParse: %+v", errParse)
+			return nil, errParse
 		}
-		parsedActiveUntil, err := time.Parse(time.RFC3339, *item["activeUntil"].S)
-		if err != nil {
-			log.Fatalf("Active until couldn't be parsed, err: %+v", err)
-			return nil, err
+		parsedActiveUntil, errParse := time.Parse(time.RFC3339, *item["activeUntil"].S)
+		if errParse != nil {
+			log.Fatalf("Active until couldn't be parsed, errParse: %+v", errParse)
+			return nil, errParse
 		}
 		newConfig := igor.New(identity, messageFormat, flowdockUsername, flowdockToken, parsedActiveFrom, parsedActiveUntil, lastCommunication)
 		allConfigs = append(allConfigs, newConfig)

@@ -12,6 +12,7 @@ import (
 	"github.com/milanaleksic/flowdock"
 )
 
+//UserConfig is a core structure that can communicate with Flowdock and is based on the contents stored in DB
 type UserConfig struct {
 	Identity                string
 	activeFrom, activeUntil time.Time
@@ -21,6 +22,7 @@ type UserConfig struct {
 	nameRegex               *regexp.Regexp
 }
 
+// New creates a new UserConfig structure
 func New(identity, messageFormat, flowdockUsername, flowdockToken string, activeFrom, activeUntil time.Time, lastCommunication map[string]time.Time) *UserConfig {
 	templ, err := template.New("template").Parse(messageFormat)
 	if err != nil {
