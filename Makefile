@@ -16,25 +16,26 @@ ${RELEASE_SOURCES}: $(SOURCES)
 
 include gomakefiles/semaphore.mk
 
-$(MAIN_APP_DIR)/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME)
-	@cd $(MAIN_APP_DIR) && (rm archive.zip > /dev/null 2>&1 || true) \
-		&& zip archive.zip $(APP_NAME) main.js
-	@printf "@ $(APP_NAME)\n@=app\n" | zipnote -w $(MAIN_APP_DIR)/archive.zip
+cf/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME)
+	@rm cf/archive.zip > /dev/null 2>&1 || true
+	@cd $(MAIN_APP_DIR) && zip archive.zip $(APP_NAME) main.js
+	@mv $(MAIN_APP_DIR)/archive.zip cf/
+	@printf "@ $(APP_NAME)\n@=app\n" | zipnote -w cf/archive.zip
 
 aws = . personal.env && docker run -i --rm \
-		-v $(abspath $(MAIN_APP_DIR)):/data \
+		-v $(abspath .):/data \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
 	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
 	    garland/aws-cli-docker \
 	    aws --region $$AWS_REGION
 
 .PHONY: unform
-unform: $(MAIN_APP_DIR)/archive.zip
+unform: cf/archive.zip
 	@$(aws) cloudformation delete-stack  \
 		  --stack-name igor
 
 .PHONY: form
-form: $(MAIN_APP_DIR)/archive.zip lambda-upload
+form: cf/archive.zip lambda-upload
 	@$(aws) cloudformation create-stack  \
 		  --stack-name igor \
 		  --template-body file:///data/cf/stack.template \
@@ -58,9 +59,9 @@ reform:
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
 .PHONY: lambda-upload
-lambda-upload: $(MAIN_APP_DIR)/archive.zip
+lambda-upload: cf/archive.zip
 	@$(aws) s3 cp  \
-		  /data/archive.zip \
+		  /data/cf/archive.zip \
 		  s3://$$BUCKET_DEPLOYMENT/deployment/$(APP_NAME).zip
 	@$(aws) lambda update-function-code \
 		  --function-name $(APP_NAME) \
@@ -68,10 +69,10 @@ lambda-upload: $(MAIN_APP_DIR)/archive.zip
 		  --s3-key deployment/$(APP_NAME).zip
 
 .PHONY: lambda-update-from-local
-lambda-update-from-local: $(MAIN_APP_DIR)/archive.zip
+lambda-update-from-local: cf/archive.zip
 	@$(aws) lambda update-function-code \
 		  --function-name $(APP_NAME) \
-		  --zip-file fileb:///data/archive.zip 
+		  --zip-file fileb:///data/cf/archive.zip 
 
 .PHONY: lambda-invoke
 lambda-invoke:
@@ -82,12 +83,12 @@ lambda-invoke:
 
 .PHONY: site-prepare
 site-prepare:
-	@. personal.env && cat $(MAIN_APP_DIR)/site/config.template.js \
+	@. personal.env && cat site/config.template.js \
 		| sed \
 			-e "s/GOOGLE_OAUTH2_CLIENT_ID/$$GOOGLE_OAUTH2_CLIENT_ID/g" \
 			-e "s/GENERATED_COGNITO_POOL_ID/$$GENERATED_COGNITO_POOL_ID/g" \
 			-e "s/AWS_REGION/$$AWS_REGION/g" \
-		> $(MAIN_APP_DIR)/site/config.js
+		> site/config.js
 
 .PHONY: site-deploy
 site-deploy: site-prepare

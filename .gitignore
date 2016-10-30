@@ -6,5 +6,5 @@ debug
 personal.env
 .vscode
 config.toml
-cmd/main/site/config.js
+site/config.js
 jq

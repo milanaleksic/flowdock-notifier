@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export SCRIPTS_DIR=$( dirname "${BASH_SOURCE[0]}" )
-export ROOT_APP_DIR=$(realpath $SCRIPTS_DIR/../../../)
+export ROOT_APP_DIR=$(realpath $SCRIPTS_DIR/../)
 . $ROOT_APP_DIR/personal.env
 
 function aws() {
