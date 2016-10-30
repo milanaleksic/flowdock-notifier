@@ -11,6 +11,9 @@ fi
 SCRIPT_DIR=`dirname "${BASH_SOURCE[0]}"`
 THIS_DIR_RELATIVE_TO_ROOT=`realpath --relative-to=$ROOT_APP_DIR $(realpath $SCRIPT_DIR)`
 
+cat $SCRIPT_DIR/cloudwatch_exporting.policy.template \
+    | sed -e "s/BUCKET_FOR_LOGS/$BUCKET_FOR_LOGS/g" > $SCRIPT_DIR/cloudwatch_exporting.policy
+
 aws s3api put-bucket-policy --bucket $BUCKET_FOR_LOGS --policy file:///data/$THIS_DIR_RELATIVE_TO_ROOT/cloudwatch_exporting.policy
 
 aws logs create-export-task \
