@@ -82,7 +82,7 @@
 						v-model="message" id="message"></textarea>
 				</div>
 				<div class="two columns">
-					<div class="u-pull-right" v-html="helpMessageForPlaceholders" v-once></div>
+					<div v-html="helpMessageForPlaceholders" v-once></div>
 				</div>
 			</div>
 			<input class="button-primary" type="button" value="Save my configuration" v-on:click="saveConfiguration">
