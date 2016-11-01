@@ -39,4 +39,4 @@ Open the `index.html` which should be in the S3 and login using your Google cred
 
 I've drawn a small UML diagram explaining how it all works in case you want to use or extend it:
 
-![UML flow](docs/igor_sequence.svg "UML flow")
+![UML flow](docs/igor_sequence.png "UML flow")
