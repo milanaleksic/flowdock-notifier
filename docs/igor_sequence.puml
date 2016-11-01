@@ -1,0 +1,95 @@
+@startuml
+
+title Architecture of Igor
+
+autonumber
+skinparam sequenceArrowThickness 2
+
+box "Website communication"
+actor "User\n(browser)" as user
+participant "S3" as s3
+participant "Google\nOAuth" as google
+participant "Cognito" as cognito
+endbox
+
+box "Shared"
+participant DynamoDB as db
+endbox
+
+box "Back end in AWS"
+participant "CloudWatch\nRule" as cron
+participant "Igor\nLambda" as lambda
+endbox
+
+box "Flowdock\nAPI"
+participant "Flowdock\nOfficial API" as flowdock
+participant "Flowdock\nUnofficial API" as flowdock_xhr
+endbox
+
+== Configuration ==
+
+user ->> s3: download content
+activate user
+
+activate s3
+s3 --> user: site contents\nHTML,CSS,JS
+deactivate s3
+
+user ->> google: authenticate
+activate google
+google --> user: auth token
+
+user ->> db: do any DB operation\nfor this user
+activate db
+db -->> cognito: utilize token
+activate cognito
+cognito ->> google: verify token
+google --> cognito: token OK
+cognito --> db: 
+deactivate google
+deactivate cognito
+
+db --> user: data saved or fetched
+deactivate db
+
+deactivate user
+
+== Background processing ==
+
+loop each 60 seconds
+
+    cron --> lambda: process
+    activate cron
+    deactivate cron
+
+    activate lambda
+    lambda ->> db: fetch all known\nconfigurations
+    activate db
+    db --> lambda: configs
+    deactivate db
+
+    lambda ->> flowdock: get latest \nmentions 
+    activate flowdock
+    flowdock --> lambda: mentions
+    deactivate flowdock
+
+    lambda ->> flowdock_xhr: get latest \nprivate messages 
+    activate flowdock_xhr
+    flowdock_xhr --> lambda: private messages
+    deactivate flowdock_xhr
+
+    loop for each <b>unanswered</b> mention or message
+        lambda ->> db: update last\ncommunication\nfor user X
+        activate db
+        deactivate db
+        lambda ->> flowdock: send to user X\na private\nor flow message
+        activate flowdock
+        flowdock --> lambda 
+        deactivate flowdock
+    end
+
+    deactivate lambda
+
+end
+
+@enduml
