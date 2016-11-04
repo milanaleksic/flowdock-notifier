@@ -1,22 +1,30 @@
 var app = new Vue({
     el: '#app',
-    data: $.extend(igor.config, {
-        // From Google
-        email: "",
-        id: "",
-        name: "",
-        // UX
-        flashMessage: "",
-        eligibleForConfiguration: false,
-        notSignedIn: false,
-        helpMessageForPlaceholders: 'Placeholders: <b>{{.From}}</b>, <b>{{.Until}}</b>',
-        // From Dynamo
-        message: "",
-        activeFrom: "",
-        activeUntil: "",
-        flowdockUsername: "",
-        flowdockToken: "",
-    }),
+    data: function () {
+        var ofTheJedi = {
+            // From Google
+            email: "",
+            id: "",
+            name: "",
+            // UX
+            flashMessage: "",
+            eligibleForConfiguration: false,
+            notSignedIn: false,
+            helpMessageForPlaceholders: 'Placeholders: <b>{{.From}}</b>, <b>{{.Until}}</b>',
+            // From Dynamo
+            message: "",
+            activeFrom: "",
+            activeUntil: "",
+            flowdockUsername: "",
+            flowdockToken: "",
+        }
+        for (var key in igor.config) {
+            if (igor.config.hasOwnProperty(key)) {
+                ofTheJedi[key] = igor.config[key];
+            }
+        }
+        return ofTheJedi;
+    },
     mounted: function () {
         var that = this;
         gapi.load('auth2', function () {
