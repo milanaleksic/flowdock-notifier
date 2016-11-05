@@ -21,9 +21,11 @@ so we have to split the work
     - client ID of a Google+ API approved Google Dev Console application;
     - a Flowdock account (optional, unless you really want to use it and not just experiment with it).
 1. rename `personal.env.template` to `personal.env` and introduce adequate values, as explained in it
-2. run `cmd/main/cf/non_supported_pre.sh` to update the `personal.env`
-3. deploy to AWS with `make form`
-4. run `cmd/main/cf/non_supported_post.sh` to update the `personal.env` with the values from CloudFormation (step 3)
+2. run `make prepare` to download extra tooling from internet to igor's dir
+3. run `cmd/main/cf/non_supported_pre.sh` to update the `personal.env`
+    - open your email and **approve requested certificate**
+4. deploy to AWS with `make form` (take note: this will take awhile)
+5. run `cmd/main/cf/non_supported_post.sh` to do finishing steps in configuration and deploy the site
 
 From this point on you can modify HTML and do `make deploy-site` to replace the cloud.
 

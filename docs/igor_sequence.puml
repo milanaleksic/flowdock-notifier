@@ -7,7 +7,7 @@ skinparam sequenceArrowThickness 2
 
 box "Website communication"
 actor "User\n(browser)" as user
-participant "S3" as s3
+participant "CloudFront" as front
 participant "Google\nOAuth" as google
 participant "Cognito" as cognito
 endbox
@@ -28,12 +28,12 @@ endbox
 
 == Configuration ==
 
-user ->> s3: download content
+user ->> front: download content
 activate user
 
-activate s3
-s3 --> user: site contents\nHTML,CSS,JS
-deactivate s3
+activate front
+front --> user: site contents\nHTML,CSS,JS
+deactivate front
 
 user ->> google: authenticate
 activate google

@@ -9,8 +9,8 @@ SOURCES := $(shell find $(SOURCEDIR) -name '*.go' -or -name '*.js' \
 	-not -path './vendor/*')
 
 $(MAIN_APP_DIR)/$(APP_NAME): $(SOURCES)
-	@. personal.env && cd $(MAIN_APP_DIR)/ && go build -ldflags \
-		"-X main.SiteDeployment=http://$$BUCKET_SITE.s3-website.$$AWS_REGION.amazonaws.com" -o ${APP_NAME}
+	. personal.env && cd $(MAIN_APP_DIR)/ && go build -ldflags \
+		"-X main.SiteDeployment=https://$$CLOUDFRONT_DOMAIN" -o ${APP_NAME}
 
 ${RELEASE_SOURCES}: $(SOURCES)
 
@@ -24,6 +24,7 @@ cf/archive.zip: $(MAIN_APP_DIR)/$(APP_NAME)
 
 aws = . personal.env && docker run -i --rm \
 		-v $(abspath .):/data \
+		-v $(abspath .)/cf/.aws:/root/.aws \
 	    --env AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
 	    --env AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
 	    garland/aws-cli-docker \
@@ -43,6 +44,8 @@ form: cf/archive.zip lambda-upload
 		  --parameters \
 		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
 		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE \
+			ParameterKey=CertificateArn,ParameterValue=$$GENERATED_CERTIFICATE_ARN \
+			ParameterKey=DomainName,ParameterValue=$$CLOUDFRONT_DOMAIN \
 		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID
 	$(MAKE) --silent wait-for-status EXPECTED=CREATE_COMPLETE FAILURE=CREATE_ROLLBACK_COMPLETE
 
@@ -55,6 +58,8 @@ reform:
 		  --parameters \
 		  	ParameterKey=DeploymentBucket,ParameterValue=$$BUCKET_DEPLOYMENT \
 		  	ParameterKey=WebSiteBucket,ParameterValue=$$BUCKET_SITE \
+			ParameterKey=CertificateArn,ParameterValue=$$GENERATED_CERTIFICATE_ARN \
+			ParameterKey=DomainName,ParameterValue=$$CLOUDFRONT_DOMAIN \
 		  	ParameterKey=CognitoPoolArn,ParameterValue=$$GENERATED_COGNITO_POOL_ID || true
 	$(MAKE) --silent wait-for-status EXPECTED=UPDATE_COMPLETE FAILURE=UPDATE_ROLLBACK_COMPLETE
 
@@ -96,6 +101,10 @@ site-deploy: site-prepare
 		  /data/site/ \
 		  s3://$$BUCKET_SITE/
 
+.PHONY: site-invalidate
+site-invalidate:
+	@$(aws) cloudfront create-invalidation --distribution-id $$GENERATED_DISTRIBUTION_ID --paths '/*'
+
 .PHONY: wait-for-status
 wait-for-status:
 ifndef EXPECTED
@@ -127,6 +136,7 @@ get-status:
 prepare: prepare_metalinter
 	@curl -Lo jq https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
 	@chmod +x jq
+	@$(aws) configure set preview.cloudfront true
 
 .PHONY: clean
 clean: clean_common

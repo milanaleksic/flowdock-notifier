@@ -10,6 +10,12 @@
         },
         "CognitoPoolArn": {
             "Type": "String"
+        },
+        "CertificateArn": {
+            "Type": "String"
+        },
+        "DomainName": {
+            "Type": "String"
         }
     },
     "Resources": {
@@ -157,10 +163,113 @@
                     "Ref": "WebSiteBucket"
                 },
                 "WebsiteConfiguration": {
-                    "IndexDocument": "index.html"
+                    "IndexDocument": "index.html",
+                    "ErrorDocument": "404.html",
+                    "RoutingRules": [
+                        {
+                            "RedirectRule": {
+                                "ReplaceKeyWith": "index.html"
+                            },
+                            "RoutingRuleCondition": {
+                                "KeyPrefixEquals": "/"
+                            }
+                        }
+                    ]
                 }
             },
             "DeletionPolicy": "Retain"
+        },
+        "siteDistribution": {
+            "Type": "AWS::CloudFront::Distribution",
+            "Properties": {
+                "DistributionConfig": {
+                    "Origins": [
+                        {
+                            "Id": {
+                                "Ref": "WebSiteBucket"
+                            },
+                            "OriginPath": "",
+                            "CustomOriginConfig": {
+                                "OriginProtocolPolicy": "http-only",
+                                "HTTPPort": 80,
+                                "OriginSSLProtocols": [
+                                    "TLSv1",
+                                    "TLSv1.1",
+                                    "TLSv1.2"
+                                ],
+                                "HTTPSPort": 443
+                            },
+                            "DomainName": {
+                                "Fn::Join": [
+                                    "",
+                                    [
+                                        {
+                                            "Ref": "WebSiteBucket"
+                                        },
+                                        ".s3-website.",
+                                        {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        ".amazonaws.com"
+                                    ]
+                                ]
+                            }
+                        }
+                    ],
+                    "DefaultRootObject": "index.html",
+                    "PriceClass": "PriceClass_All",
+                    "Enabled": true,
+                    "DefaultCacheBehavior": {
+                        "TargetOriginId": {
+                            "Ref": "WebSiteBucket"
+                        },
+                        "ViewerProtocolPolicy": "redirect-to-https",
+                        "DefaultTTL": 1800,
+                        "AllowedMethods": [
+                            "HEAD",
+                            "GET"
+                        ],
+                        "CachedMethods": [
+                            "HEAD",
+                            "GET"
+                        ],
+                        "MinTTL": 0,
+                        "Compress": true,
+                        "ForwardedValues": {
+                            "Cookies": {
+                                "Forward": "none"
+                            },
+                            "QueryString": false
+                        }
+                    },
+                    "ViewerCertificate": {
+                        "SslSupportMethod": "sni-only",
+                        "AcmCertificateArn": {
+                            "Ref": "CertificateArn"
+                        },
+                        "MinimumProtocolVersion": "TLSv1"
+                    },
+                    "CustomErrorResponses": [
+                        {
+                            "ErrorCode": 403,
+                            "ResponsePagePath": "/404.html",
+                            "ResponseCode": "404",
+                            "ErrorCachingMinTTL": 300
+                        },
+                        {
+                            "ErrorCode": 404,
+                            "ResponsePagePath": "/404.html",
+                            "ResponseCode": "404",
+                            "ErrorCachingMinTTL": 300
+                        }
+                    ],
+                    "Aliases": [
+                        {
+                            "Ref": "DomainName"
+                        }
+                    ]
+                }
+            }
         },
         "cognitoRole": {
             "Type": "AWS::IAM::Role",
@@ -268,6 +377,19 @@
                     "cognitoRole",
                     "Arn"
                 ]
+            }
+        },
+         "distributionDomainName": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "siteDistribution",
+                    "DomainName"
+                ]
+            }
+        },
+        "distributionId": {
+            "Value": {
+                "Ref": "siteDistribution"
             }
         }
     }
