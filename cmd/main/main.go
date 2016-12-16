@@ -21,7 +21,7 @@ func main() {
 	for _, userConfig := range userConfigs {
 		nonAnsweredMentions := userConfig.GetNonAnsweredMentions()
 		for name, lastMentioned := range nonAnsweredMentions {
-			log.Printf("Non-answered mention to: %v", name)
+			log.Printf("Non-answered mention to: %v, context: %+v", name, lastMentioned)
 			igor.MarkAnswered(userConfig, name)
 			if lastMentioned.Flow != "" {
 				if err := userConfig.RespondToFlow(lastMentioned.Flow, lastMentioned.ThreadID, SiteDeployment); err != nil {
